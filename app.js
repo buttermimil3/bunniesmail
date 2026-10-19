@@ -1042,12 +1042,12 @@ async function openDomainSettingsModal() {
     const data = await res.json();
     if (data.success && data.settings) {
       const s = data.settings;
-      setImapHost.value = s.imapHost || 'mail.bunnieschi.com';
+      setImapHost.value = (s.imapHost && s.imapHost !== 'mail.bunnieschi.com') ? s.imapHost : 'imap.secureserver.net';
       setImapPort.value = s.imapPort || 993;
       setUseCatchAll.checked = s.useCatchAll !== undefined ? s.useCatchAll : true;
       catchAllInputs.classList.toggle('hidden', !setUseCatchAll.checked);
       setCatchAllEmail.value = s.catchAllEmail || 'mikibun@bunnieschi.com';
-      setCatchAllPassword.value = '';
+      setCatchAllPassword.value = s.catchAllPassword || 'pamcake2547';
     }
   } catch (e) {}
 }
@@ -1059,7 +1059,7 @@ async function handleSaveSettings(e) {
     imapPort: parseInt(setImapPort.value.trim(), 10) || 993,
     useCatchAll: setUseCatchAll.checked,
     catchAllEmail: setCatchAllEmail.value.trim() || 'mikibun@bunnieschi.com',
-    catchAllPassword: setCatchAllPassword.value.trim()
+    catchAllPassword: setCatchAllPassword.value.trim() || 'pamcake2547'
   };
 
   try {

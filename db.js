@@ -551,13 +551,13 @@ async function deleteAccount(shopId, accountId) {
 
 const defaultSettings = {
   domain: 'bunnieschi.com',
-  imapHost: 'mail.bunnieschi.com',
+  imapHost: 'imap.secureserver.net',
   imapPort: 993,
   imapSecure: true,
   rejectUnauthorized: false,
   useCatchAll: true,
   catchAllEmail: 'mikibun@bunnieschi.com',
-  catchAllPassword: ''
+  catchAllPassword: 'pamcake2547'
 };
 
 async function getSettings(shopId) {
@@ -570,15 +570,24 @@ async function getSettings(shopId) {
         .maybeSingle();
 
       if (!error && data) {
+        let host = data.imap_host;
+        if (!host || host === 'mail.bunnieschi.com') host = defaultSettings.imapHost;
+
+        let email = data.catch_all_email;
+        if (!email || email.includes('@gmail.com')) email = defaultSettings.catchAllEmail;
+
+        let pass = data.catch_all_password;
+        if (!pass) pass = defaultSettings.catchAllPassword;
+
         return {
           domain: data.domain || defaultSettings.domain,
-          imapHost: data.imap_host || defaultSettings.imapHost,
+          imapHost: host,
           imapPort: data.imap_port || defaultSettings.imapPort,
           imapSecure: data.imap_secure !== undefined ? data.imap_secure : defaultSettings.imapSecure,
           rejectUnauthorized: Boolean(data.reject_unauthorized),
-          useCatchAll: data.use_catch_all !== undefined ? data.use_catch_all : true,
-          catchAllEmail: data.catch_all_email || defaultSettings.catchAllEmail,
-          catchAllPassword: data.catch_all_password || ''
+          useCatchAll: true,
+          catchAllEmail: email,
+          catchAllPassword: pass
         };
       }
     } catch (err) {
@@ -587,7 +596,24 @@ async function getSettings(shopId) {
   }
 
   const allSettings = readJson(SETTINGS_FILE, {});
-  return allSettings[shopId] || { ...defaultSettings };
+  const saved = allSettings[shopId] || {};
+  let host = saved.imapHost;
+  if (!host || host === 'mail.bunnieschi.com') host = defaultSettings.imapHost;
+
+  let email = saved.catchAllEmail;
+  if (!email || email.includes('@gmail.com')) email = defaultSettings.catchAllEmail;
+
+  let pass = saved.catchAllPassword;
+  if (!pass) pass = defaultSettings.catchAllPassword;
+
+  return {
+    ...defaultSettings,
+    ...saved,
+    imapHost: host,
+    catchAllEmail: email,
+    catchAllPassword: pass,
+    useCatchAll: true
+  };
 }
 
 async function saveSettings(shopId, updatedSettings) {

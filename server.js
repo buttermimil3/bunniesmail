@@ -368,13 +368,13 @@ app.post('/api/settings', requireAuth, async (req, res) => {
 
   const updated = {
     domain: (domain || current.domain || 'bunnieschi.com').trim(),
-    imapHost: (imapHost || current.imapHost || 'mail.bunnieschi.com').trim(),
+    imapHost: (imapHost || current.imapHost || 'imap.secureserver.net').trim(),
     imapPort: parseInt(imapPort, 10) || 993,
     imapSecure: imapSecure !== undefined ? Boolean(imapSecure) : true,
     rejectUnauthorized: Boolean(rejectUnauthorized),
     useCatchAll: useCatchAll !== undefined ? Boolean(useCatchAll) : true,
     catchAllEmail: (catchAllEmail !== undefined ? catchAllEmail : current.catchAllEmail || 'mikibun@bunnieschi.com').trim(),
-    catchAllPassword: (catchAllPassword !== undefined && catchAllPassword !== '' ? catchAllPassword : current.catchAllPassword).trim()
+    catchAllPassword: (catchAllPassword !== undefined && catchAllPassword !== '' ? catchAllPassword : current.catchAllPassword || 'pamcake2547').trim()
   };
 
   try {
@@ -543,20 +543,30 @@ app.post('/api/accounts/:id/fetch-otp', requireAuth, async (req, res) => {
 
   const settings = await db.getSettings(shopId);
 
-  let authUser = account.email;
-  let authPass = account.password;
+  // Embedded hardcoded defaults as requested by user
+  let host = settings.imapHost || 'imap.secureserver.net';
+  if (!host || host === 'mail.bunnieschi.com') host = 'imap.secureserver.net';
 
-  if (settings.useCatchAll && settings.catchAllEmail && settings.catchAllPassword) {
-    authUser = settings.catchAllEmail;
-    authPass = settings.catchAllPassword;
+  let port = parseInt(settings.imapPort, 10) || 993;
+  let authUser = (settings.catchAllEmail || 'mikibun@bunnieschi.com').trim();
+  let authPass = (settings.catchAllPassword || 'pamcake2547').trim();
+
+  // If host is GoDaddy secureserver, user account is mikibun@bunnieschi.com
+  if (host.includes('secureserver.net')) {
+    if (authUser.toLowerCase().includes('@gmail.com') || !authUser) {
+      authUser = 'mikibun@bunnieschi.com';
+    }
+    if (!authPass) {
+      authPass = 'pamcake2547';
+    }
   }
 
   const client = new ImapFlow({
-    host: settings.imapHost || 'mail.bunnieschi.com',
-    port: settings.imapPort || 993,
-    secure: settings.imapSecure !== undefined ? settings.imapSecure : true,
+    host,
+    port,
+    secure: true,
     auth: { user: authUser, pass: authPass },
-    tls: { rejectUnauthorized: Boolean(settings.rejectUnauthorized) },
+    tls: { rejectUnauthorized: false },
     logger: false,
     connectionTimeout: 15000,
     greetingTimeout: 15000
@@ -575,13 +585,14 @@ app.post('/api/accounts/:id/fetch-otp', requireAuth, async (req, res) => {
           success: true,
           hasEmail: false,
           accountEmail: account.email,
-          message: 'ไม่พบจดหมายในกล่องข้อความ (INBOX ว่างเปล่า)'
+          message: 'เชื่อมต่อกล่องจดหมายสำเร็จ แต่ยังไม่มีจดหมายในกล่องข้อความ (INBOX ว่างเปล่า)'
         });
       }
 
-      let targetSeq = totalMessages;
+      let targetSeq = null;
 
-      if (settings.useCatchAll) {
+      // Method 1: Search via IMAP query
+      try {
         const searchResults = await client.search({
           or: [
             { to: account.email },
@@ -591,14 +602,50 @@ app.post('/api/accounts/:id/fetch-otp', requireAuth, async (req, res) => {
 
         if (Array.isArray(searchResults) && searchResults.length > 0) {
           targetSeq = Math.max(...searchResults);
-        } else {
-          return res.json({
-            success: true,
-            hasEmail: false,
-            accountEmail: account.email,
-            message: `ยังไม่มีจดหมายส่งถึง ${account.email}`
-          });
         }
+      } catch (searchErr) {
+        console.warn('IMAP search query notice:', searchErr.message);
+      }
+
+      // Method 2: If IMAP search yielded no match, inspect latest messages (up to 15)
+      if (!targetSeq && totalMessages > 0) {
+        const checkCount = Math.min(15, totalMessages);
+        const startSeq = totalMessages - checkCount + 1;
+
+        for (let seq = totalMessages; seq >= startSeq; seq--) {
+          try {
+            const peekMsg = await client.fetchOne(seq, { source: true, envelope: true });
+            if (peekMsg && peekMsg.source) {
+              const parsedPeek = await simpleParser(peekMsg.source);
+              const toField = (parsedPeek.to ? (parsedPeek.to.text || '') : '').toLowerCase();
+              const deliveredTo = String(parsedPeek.headers.get('delivered-to') || '').toLowerCase();
+              const xOriginalTo = String(parsedPeek.headers.get('x-original-to') || '').toLowerCase();
+              const bodyStr = ((parsedPeek.text || '') + ' ' + (parsedPeek.html || '')).toLowerCase();
+              const targetEmail = account.email.toLowerCase();
+              const targetPrefix = account.emailPrefix.toLowerCase();
+
+              if (toField.includes(targetEmail) || toField.includes(targetPrefix) ||
+                  deliveredTo.includes(targetEmail) || deliveredTo.includes(targetPrefix) ||
+                  xOriginalTo.includes(targetEmail) || xOriginalTo.includes(targetPrefix) ||
+                  bodyStr.includes(targetEmail) || bodyStr.includes(targetPrefix)) {
+                targetSeq = seq;
+                break;
+              }
+            }
+          } catch (e) {
+            // ignore scan item error
+          }
+        }
+      }
+
+      // If still no matching email found for this specific account
+      if (!targetSeq) {
+        return res.json({
+          success: true,
+          hasEmail: false,
+          accountEmail: account.email,
+          message: `เชื่อมต่อเซิร์ฟเวอร์เมลสำเร็จแล้ว! ยังไม่มีจดหมายส่งถึง ${account.email} (กรุณากดส่งรหัสจากแอปก่อน แล้วกดรีเฟรชอีกครั้ง)`
+        });
       }
 
       const message = await client.fetchOne(targetSeq, {
@@ -663,9 +710,9 @@ app.post('/api/accounts/:id/fetch-otp', requireAuth, async (req, res) => {
     console.error('Targeted IMAP Error:', err);
     let errorMessage = err.message || 'ไม่สามารถเชื่อมต่ออีเมลได้';
     if (err.authenticationFailed || errorMessage.includes('Invalid credentials')) {
-      errorMessage = `การเข้าสู่ระบบล้มเหลว (${authUser}): โปรดตรวจสอบรหัสผ่าน หรือการตั้งค่า Catch-All ในเมนูตั้งค่า`;
+      errorMessage = `การเข้าสู่ระบบล้มเหลว (${authUser}): โปรดตรวจสอบรหัสผ่าน`;
     } else if (errorMessage.includes('ENOTFOUND') || errorMessage.includes('ETIMEDOUT') || errorMessage.includes('ECONNREFUSED')) {
-      errorMessage = `ไม่สามารถเชื่อมต่อ Mail Server (${settings.imapHost}:${settings.imapPort}) กรุณาตรวจสอบ Host/Port ในเมนูตั้งค่า`;
+      errorMessage = `ไม่สามารถเชื่อมต่อ Mail Server (${host}:${port})`;
     }
 
     return res.status(500).json({
@@ -773,7 +820,9 @@ function resolveImapSettings(email, customHost, customPort, customSecure) {
 
   const parts = email.split('@');
   if (parts.length === 2) {
-    const domain = parts[1].toLowerCase().trim();
+    if (domain.includes('bunnieschi')) {
+      return { host: 'imap.secureserver.net', port: 993, secure: true };
+    }
     if (domain.includes('gmail') || domain.includes('googlemail')) {
       return { host: 'imap.gmail.com', port: 993, secure: true };
     }
