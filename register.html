@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="th" class="h-full bg-[#FAF6F0] text-[#4A3525]">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>สมัครสมาชิกร้านค้าใหม่ - Bunnieschi Shop Partner</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Google Font: Mali & Prompt -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Mali:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700;800&family=Prompt:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="min-h-full flex flex-col font-['Mali',cursive,'Prompt',sans-serif] antialiased selection:bg-[#F4ACB7] selection:text-[#583116]">
+
+  <!-- Main Container -->
+  <div class="min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-md bg-white border-2 border-[#EADBC8] rounded-3xl p-8 sm:p-9 shadow-xl space-y-6 text-center">
+
+      <!-- Bear Ears Avatar with Whipped Cream -->
+      <div class="bear-avatar-container">
+        <div class="bear-ear left"><div class="bear-ear-inner"></div></div>
+        <div class="bear-ear right"><div class="bear-ear-inner"></div></div>
+        <!-- Whipped Cream SVG -->
+        <svg class="whipped-cream" viewBox="0 0 60 35" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M30 2C24 2 20 8 16 11C11 15 6 18 8 26C10 32 18 34 30 34C42 34 50 32 52 26C54 18 49 15 44 11C40 8 36 2 30 2Z" fill="#FFFFFF" stroke="#EADBC8" stroke-width="2"/>
+          <path d="M30 4C32 8 35 12 37 15" stroke="#FDE8EC" stroke-width="2" stroke-linecap="round"/>
+          <circle cx="30" cy="5" r="3" fill="#F4ACB7"/>
+        </svg>
+        <div class="bear-avatar-circle">
+          <i data-lucide="store" class="w-10 h-10 text-[#7B4B27]"></i>
+        </div>
+      </div>
+
+      <div>
+        <h2 class="text-2xl font-bold text-[#4A3525]">สมัครสมาชิกร้านค้าใหม่</h2>
+        <p class="text-xs text-[#8C7A6B] mt-1 font-medium">Bunnieschi Shop Partner - ระบบจัดการเมลพรีเมี่ยม</p>
+      </div>
+
+      <!-- Registration Form -->
+      <form id="registerForm" class="space-y-4 text-left">
+        <div id="registerError" class="hidden p-3 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2">
+          <i data-lucide="alert-circle" class="w-4 h-4 shrink-0"></i>
+          <span id="registerErrorText">ข้อความผิดพลาด</span>
+        </div>
+
+        <div>
+          <label for="shopNameInput" class="block text-xs font-semibold text-[#583116] mb-1.5">ชื่อร้านค้า</label>
+          <div class="relative">
+            <i data-lucide="store" class="w-4 h-4 text-[#8C7A6B] absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+            <input type="text" id="shopNameInput" required placeholder="เช่น ร้านมิกิบุน พรีเมี่ยม"
+              class="w-full pl-10 pr-4 py-2.5 bg-[#FAF6F0] border-2 border-[#EADBC8] rounded-2xl text-sm focus:outline-none focus:border-[#7B4B27] text-[#4A3525]">
+          </div>
+        </div>
+
+        <div>
+          <label for="shopEmailInput" class="block text-xs font-semibold text-[#583116] mb-1.5">อีเมลสำหรับร้านค้า (ใช้สำหรับล็อกอิน)</label>
+          <div class="relative">
+            <i data-lucide="mail" class="w-4 h-4 text-[#8C7A6B] absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+            <input type="email" id="shopEmailInput" required placeholder="shop@example.com"
+              class="w-full pl-10 pr-4 py-2.5 bg-[#FAF6F0] border-2 border-[#EADBC8] rounded-2xl text-sm focus:outline-none focus:border-[#7B4B27] text-[#4A3525] font-mono">
+          </div>
+        </div>
+
+        <div>
+          <label for="shopPassInput" class="block text-xs font-semibold text-[#583116] mb-1.5">รหัสผ่าน (อย่างน้อย 6 ตัวอักษร)</label>
+          <div class="relative">
+            <i data-lucide="lock" class="w-4 h-4 text-[#8C7A6B] absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+            <input type="password" id="shopPassInput" required minlength="6" placeholder="กำหนดรหัสผ่านของร้าน"
+              class="w-full pl-10 pr-4 py-2.5 bg-[#FAF6F0] border-2 border-[#EADBC8] rounded-2xl text-sm focus:outline-none focus:border-[#7B4B27] text-[#4A3525]">
+          </div>
+        </div>
+
+        <div>
+          <label for="shopConfirmPassInput" class="block text-xs font-semibold text-[#583116] mb-1.5">ยืนยันรหัสผ่าน</label>
+          <div class="relative">
+            <i data-lucide="shield-check" class="w-4 h-4 text-[#8C7A6B] absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+            <input type="password" id="shopConfirmPassInput" required minlength="6" placeholder="กรอกรหัสผ่านซ้ำอีกครั้ง"
+              class="w-full pl-10 pr-4 py-2.5 bg-[#FAF6F0] border-2 border-[#EADBC8] rounded-2xl text-sm focus:outline-none focus:border-[#7B4B27] text-[#4A3525]">
+          </div>
+        </div>
+
+        <button type="submit" id="btnRegisterSubmit" class="w-full py-3 px-4 rounded-2xl font-bold text-sm btn-cute-primary flex items-center justify-center gap-2">
+          <i data-lucide="user-plus" class="w-4 h-4"></i>
+          <span>ยืนยันการสมัครสมาชิกร้านค้า</span>
+        </button>
+      </form>
+
+      <div class="pt-2 border-t border-[#EADBC8]/70 text-xs text-[#8C7A6B]">
+        <span>มีบัญชีร้านค้าอยู่แล้ว?</span>
+        <a href="index.html" class="text-[#D88390] hover:underline font-bold ml-1">เข้าสู่ระบบที่นี่</a>
+      </div>
+
+    </div>
+  </div>
+
+  <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <script src="register.js"></script>
+</body>
+</html>

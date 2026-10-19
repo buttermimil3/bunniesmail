@@ -1,6 +1,7 @@
-// Bunnieschi Shop - Cute Cafe Client Application Logic
+// Bunnieschi Shop - Cute Cafe Multi-Tenant Client Application Logic
 
 let AUTH_TOKEN = localStorage.getItem('bunnieschi_token') || '';
+let currentShop = null;
 let currentAccounts = [];
 let availableApps = [];
 let currentFilterApp = 'all';
@@ -26,6 +27,8 @@ const navTabAccounts = document.getElementById('navTabAccounts');
 const navTabUniversal = document.getElementById('navTabUniversal');
 const viewAccounts = document.getElementById('viewAccounts');
 const viewUniversal = document.getElementById('viewUniversal');
+const headerShopName = document.getElementById('headerShopName');
+const heroShopName = document.getElementById('heroShopName');
 
 // DOM Elements - Dashboard Stats & Breakdown
 const statTotal = document.getElementById('statTotal');
@@ -89,13 +92,6 @@ const targetFrom = document.getElementById('targetFrom');
 const targetDate = document.getElementById('targetDate');
 const btnRetryTargetOtp = document.getElementById('btnRetryTargetOtp');
 const chkTargetAutoRefresh = document.getElementById('chkTargetAutoRefresh');
-
-// Register Modal
-const modalRegister = document.getElementById('modalRegister');
-const btnOpenRegisterModal = document.getElementById('btnOpenRegisterModal');
-const btnCloseRegisterModal = document.getElementById('btnCloseRegisterModal');
-const btnDismissRegister = document.getElementById('btnDismissRegister');
-const btnGoRegisterLogin = document.getElementById('btnGoRegisterLogin');
 
 // Domain Settings Modal
 const modalDomainSettings = document.getElementById('modalDomainSettings');
@@ -176,7 +172,6 @@ function setupEventListeners() {
     if (e.target === modalCreateAccount) modalCreateAccount.classList.add('hidden');
   });
 
-  // Random prefix & password
   btnRandomPrefix.addEventListener('click', () => {
     const prefixes = ['netflix_th', 'spotify_vip', 'canva_pro', 'yt_premium', 'chatgpt_user', 'bunnies_acc', 'plus_th'];
     inputEmailPrefix.value = prefixes[Math.floor(Math.random() * prefixes.length)] + Math.floor(100 + Math.random() * 900);
@@ -187,7 +182,7 @@ function setupEventListeners() {
     showToast('สุ่มรหัสผ่านปลอดภัยเรียบร้อย', 'info');
   });
 
-  // Duration Selector in Create Modal (1 วัน, 7 วัน, 30 วัน, อื่นๆ)
+  // Duration Selector in Create Modal
   durationOptionsContainer.querySelectorAll('.duration-card').forEach(card => {
     card.addEventListener('click', () => {
       durationOptionsContainer.querySelectorAll('.duration-card').forEach(c => c.classList.remove('selected'));
@@ -227,21 +222,6 @@ function setupEventListeners() {
   chkTargetAutoRefresh.addEventListener('change', (e) => {
     if (e.target.checked) startTargetAutoRefresh();
     else stopTargetAutoRefresh();
-  });
-
-  // Register modal (placeholder for future membership)
-  btnOpenRegisterModal.addEventListener('click', (e) => {
-    e.preventDefault();
-    modalRegister.classList.remove('hidden');
-  });
-  btnGoRegisterLogin.addEventListener('click', (e) => {
-    e.preventDefault();
-    modalRegister.classList.remove('hidden');
-  });
-  btnCloseRegisterModal.addEventListener('click', () => modalRegister.classList.add('hidden'));
-  btnDismissRegister.addEventListener('click', () => modalRegister.classList.add('hidden'));
-  modalRegister.addEventListener('click', (e) => {
-    if (e.target === modalRegister) modalRegister.classList.add('hidden');
   });
 
   // Domain Settings
@@ -296,7 +276,7 @@ function switchTab(tab) {
 }
 
 // ==========================================
-// AUTHENTICATION LOGIC
+// AUTHENTICATION LOGIC (Multi-Tenant)
 // ==========================================
 
 async function checkAuth() {
@@ -310,7 +290,9 @@ async function checkAuth() {
       headers: { 'Authorization': `Bearer ${AUTH_TOKEN}` }
     });
     const data = await res.json();
-    if (data.authenticated) {
+    if (data.authenticated && data.shop) {
+      currentShop = data.shop;
+      applyShopBranding(data.shop);
       showDashboardView();
       await loadAppPresets();
       await loadAccounts();
@@ -319,6 +301,13 @@ async function checkAuth() {
     }
   } catch (err) {
     showLoginView();
+  }
+}
+
+function applyShopBranding(shop) {
+  if (shop && shop.shopName) {
+    headerShopName.textContent = shop.shopName;
+    heroShopName.textContent = shop.shopName;
   }
 }
 
@@ -343,10 +332,12 @@ async function handleLogin(e) {
 
     AUTH_TOKEN = data.token;
     localStorage.setItem('bunnieschi_token', AUTH_TOKEN);
+    currentShop = data.shop;
+    applyShopBranding(data.shop);
     showDashboardView();
     await loadAppPresets();
     await loadAccounts();
-    showToast('เข้าสู่ระบบสำเร็จ ยินดีต้อนรับครับ', 'success');
+    showToast(`เข้าสู่ระบบร้าน "${data.shop.shopName}" สำเร็จ`, 'success');
   } catch (err) {
     loginErrorText.textContent = err.message;
     loginError.classList.remove('hidden');
@@ -362,6 +353,7 @@ async function handleLogout() {
   } catch (e) {}
 
   AUTH_TOKEN = '';
+  currentShop = null;
   localStorage.removeItem('bunnieschi_token');
   showLoginView();
   showToast('ออกจากระบบเรียบร้อย', 'info');
@@ -426,7 +418,6 @@ async function loadAppPresets() {
 function renderFilterChips() {
   appFilterChipsList.innerHTML = '';
 
-  // All button
   const allBtn = document.createElement('button');
   allBtn.type = 'button';
   allBtn.className = `app-chip px-3 py-1 rounded-xl text-xs font-bold whitespace-nowrap transition-all border-2 ${
@@ -443,7 +434,6 @@ function renderFilterChips() {
   });
   appFilterChipsList.appendChild(allBtn);
 
-  // App chips
   availableApps.forEach(appName => {
     const btn = document.createElement('button');
     btn.type = 'button';
@@ -492,7 +482,6 @@ function renderMultiAppSelector() {
   if (window.lucide) lucide.createIcons();
 }
 
-// Add Custom App Handler
 async function handleAddCustomApp(e) {
   e.preventDefault();
   const newName = inputNewAppName.value.trim();
@@ -569,7 +558,6 @@ function updateStatistics() {
   }).length;
 }
 
-// Requirement 3: Detailed duration breakdown per app
 function updateDurationBreakdown(appName) {
   const matchingAccounts = currentAccounts.filter(a => {
     const appsList = Array.isArray(a.apps) ? a.apps : [a.app || ''];
@@ -595,7 +583,6 @@ function updateDurationBreakdown(appName) {
 function renderAccountsTable() {
   let filtered = currentAccounts;
 
-  // Filter by app
   if (currentFilterApp && currentFilterApp !== 'all') {
     filtered = filtered.filter(a => {
       const appsList = Array.isArray(a.apps) ? a.apps : [a.app || ''];
@@ -603,7 +590,6 @@ function renderAccountsTable() {
     });
   }
 
-  // Filter by duration
   if (currentFilterDuration && currentFilterDuration !== 'all') {
     filtered = filtered.filter(a => {
       if (currentFilterDuration === '30_days') {
@@ -613,7 +599,6 @@ function renderAccountsTable() {
     });
   }
 
-  // Filter by search
   if (currentSearchTerm) {
     const term = currentSearchTerm.toLowerCase();
     filtered = filtered.filter(a => {
@@ -631,7 +616,7 @@ function renderAccountsTable() {
         <td colspan="8" class="py-12 text-center text-[#8C7A6B]">
           <div class="flex flex-col items-center justify-center gap-2">
             <i data-lucide="inbox" class="w-8 h-8 text-[#8C7A6B]"></i>
-            <span>ไม่พบบัญชีที่ตรงกับเงื่อนไขที่เลือก</span>
+            <span>ไม่พบบัญชีที่ตรงกับเงื่อนไขในร้านของคุณ</span>
           </div>
         </td>
       </tr>
@@ -645,10 +630,8 @@ function renderAccountsTable() {
     const tr = document.createElement('tr');
     tr.className = 'hover:bg-[#FFF9DB]/40 transition-colors';
 
-    // Duration label
     const durationBadge = formatDurationBadge(acc.duration, acc.durationCustom);
 
-    // Multi-apps pills
     const appsList = Array.isArray(acc.apps) && acc.apps.length > 0 ? acc.apps : [acc.app || 'Other'];
     const appsBadgesHtml = appsList.map(app => `
       <span class="inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-bold border border-[#EADBC8] bg-[#FDE8EC] text-[#7B4B27]">
@@ -688,7 +671,7 @@ function renderAccountsTable() {
         </div>
       </td>
 
-      <!-- Duration (Requirement 2) -->
+      <!-- Duration -->
       <td class="py-3 px-4">
         ${durationBadge}
       </td>
@@ -734,7 +717,6 @@ function renderAccountsTable() {
       </td>
     `;
 
-    // Bind row events
     tr.querySelector('.btn-copy-email').addEventListener('click', () => {
       copyToClipboard(acc.email, `คัดลอกอีเมล ${acc.email} แล้ว`);
     });
@@ -958,7 +940,7 @@ function stopTargetAutoRefresh() {
 }
 
 // ==========================================
-// DOMAIN SETTINGS (Default: mikibun@bunnieschi.com)
+// DOMAIN SETTINGS
 // ==========================================
 
 async function openDomainSettingsModal() {

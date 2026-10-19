@@ -8,7 +8,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
-  <!-- Google Font: Mali & Prompt (Cute & readable handwriting) -->
+  <!-- Google Font: Mali & Prompt -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Mali:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700;800&family=Prompt:wght@400;500;600&display=swap" rel="stylesheet">
@@ -22,7 +22,7 @@
   <div id="loginSection" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#FAF6F0]/95 backdrop-blur-md">
     <div class="w-full max-w-md bg-white border-2 border-[#EADBC8] rounded-3xl p-8 shadow-xl space-y-6 text-center">
 
-      <!-- Centered Bear Ears Avatar for Login -->
+      <!-- Centered Bear Ears Avatar with Whipped Cream -->
       <div class="bear-avatar-container">
         <div class="bear-ear left"><div class="bear-ear-inner"></div></div>
         <div class="bear-ear right"><div class="bear-ear-inner"></div></div>
@@ -38,11 +38,11 @@
       </div>
 
       <div>
-        <h2 class="text-2xl font-bold text-[#4A3525]">Bunnieschi Shop</h2>
-        <p class="text-xs text-[#8C7A6B] mt-1">ระบบจัดการเมลพรีเมี่ยม @bunnieschi.com</p>
+        <h2 class="text-2xl font-bold text-[#4A3525]">เข้าสู่ระบบร้านค้า</h2>
+        <p class="text-xs text-[#8C7A6B] mt-1">Bunnieschi Shop - ระบบจัดการเมล @bunnieschi.com</p>
       </div>
 
-      <!-- Login Form -->
+      <!-- Login Form (No Register Links Here - 100% removed) -->
       <form id="loginForm" class="space-y-4 text-left">
         <div id="loginError" class="hidden p-3 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2">
           <i data-lucide="alert-circle" class="w-4 h-4 shrink-0"></i>
@@ -50,10 +50,10 @@
         </div>
 
         <div>
-          <label for="loginUser" class="block text-xs font-semibold text-[#583116] mb-1.5">ชื่อผู้ใช้งาน</label>
+          <label for="loginUser" class="block text-xs font-semibold text-[#583116] mb-1.5">อีเมลร้านค้า หรือชื่อผู้ใช้</label>
           <div class="relative">
             <i data-lucide="user" class="w-4 h-4 text-[#8C7A6B] absolute left-3.5 top-1/2 -translate-y-1/2"></i>
-            <input type="text" id="loginUser" required value="admin"
+            <input type="text" id="loginUser" required placeholder="admin หรือ your-shop@email.com"
               class="w-full pl-10 pr-4 py-2.5 bg-[#FAF6F0]/80 border-2 border-[#EADBC8] rounded-2xl text-sm focus:outline-none focus:border-[#7B4B27] text-[#4A3525]">
           </div>
         </div>
@@ -62,23 +62,16 @@
           <label for="loginPass" class="block text-xs font-semibold text-[#583116] mb-1.5">รหัสผ่าน</label>
           <div class="relative">
             <i data-lucide="lock" class="w-4 h-4 text-[#8C7A6B] absolute left-3.5 top-1/2 -translate-y-1/2"></i>
-            <input type="password" id="loginPass" required placeholder="รหัสผ่านผู้ดูแลระบบ"
+            <input type="password" id="loginPass" required placeholder="รหัสผ่านของร้านค้า"
               class="w-full pl-10 pr-4 py-2.5 bg-[#FAF6F0]/80 border-2 border-[#EADBC8] rounded-2xl text-sm focus:outline-none focus:border-[#7B4B27] text-[#4A3525]">
           </div>
         </div>
 
         <button type="submit" id="btnLoginSubmit" class="w-full py-3 px-4 rounded-2xl font-bold text-sm btn-cute-primary flex items-center justify-center gap-2">
           <i data-lucide="log-in" class="w-4 h-4"></i>
-          <span>เข้าสู่ระบบจัดการ</span>
+          <span>เข้าสู่ระบบร้านค้า</span>
         </button>
       </form>
-
-      <div class="pt-2 border-t border-[#EADBC8]/60">
-        <a href="#register" id="btnGoRegisterLogin" class="text-xs text-[#D88390] hover:underline font-semibold flex items-center justify-center gap-1">
-          <i data-lucide="user-plus" class="w-3.5 h-3.5"></i>
-          <span>สมัครสมาชิกใหม่ (แยกสำหรับลูกค้า)</span>
-        </a>
-      </div>
     </div>
   </div>
 
@@ -103,9 +96,9 @@
           </button>
         </div>
 
-        <!-- Center Brand Name (compact for header) -->
+        <!-- Center Brand Name (Displays Current Shop Name) -->
         <div class="hidden sm:flex items-center gap-2 font-bold text-[#7B4B27] text-sm">
-          <span>Bunnieschi Shop</span>
+          <span id="headerShopName">Bunnieschi Shop</span>
           <span class="text-[11px] font-normal px-2 py-0.5 rounded-full bg-[#FFF9DB] text-[#7B4B27] border border-[#EADBC8]">
             @bunnieschi.com
           </span>
@@ -117,7 +110,7 @@
             <i data-lucide="server" class="w-3.5 h-3.5 text-[#7B4B27]"></i>
             <span class="hidden md:inline">โฮสต์เมล</span>
           </button>
-          <button id="btnOpenChangePass" title="เปลี่ยนรหัสผ่านแอดมิน" class="p-2 rounded-xl border border-[#EADBC8] bg-[#FAF6F0] hover:bg-[#F3ECE2] text-[#7B4B27] transition-all">
+          <button id="btnOpenChangePass" title="เปลี่ยนรหัสผ่านร้านค้า" class="p-2 rounded-xl border border-[#EADBC8] bg-[#FAF6F0] hover:bg-[#F3ECE2] text-[#7B4B27] transition-all">
             <i data-lucide="key" class="w-4 h-4"></i>
           </button>
           <button id="btnLogout" class="px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-semibold flex items-center gap-1 transition-all">
@@ -153,30 +146,21 @@
           </svg>
           <!-- Center Circle Avatar -->
           <div class="bear-avatar-circle">
-            <i data-lucide="sparkles" class="w-10 h-10 text-[#7B4B27]"></i>
+            <i data-lucide="store" class="w-10 h-10 text-[#7B4B27]"></i>
           </div>
         </div>
 
         <!-- Shop Name & Subtitle -->
-        <h2 class="text-2xl sm:text-3xl font-bold text-[#4A3525]">Bunnieschi Shop</h2>
+        <h2 class="text-2xl sm:text-3xl font-bold text-[#4A3525]" id="heroShopName">Bunnieschi Shop</h2>
         <p class="text-xs sm:text-sm text-[#8C7A6B] mt-1 font-medium">
           ระบบคลังเมลและรับรหัส OTP อัตโนมัติ (@bunnieschi.com)
         </p>
 
-        <!-- Host email badge & Membership registration link -->
-        <div class="flex flex-wrap items-center justify-center gap-2 mt-4 pt-4 border-t border-[#EADBC8]/70">
+        <!-- Host email badge -->
+        <div class="flex items-center justify-center gap-2 mt-4 pt-4 border-t border-[#EADBC8]/70">
           <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FFF9DB] text-[#7B4B27] border border-[#EADBC8] text-xs font-mono">
             <i data-lucide="check-circle" class="w-3.5 h-3.5 text-emerald-600"></i>
             <span>โฮสต์หลัก: <strong>mikibun@bunnieschi.com</strong></span>
-          </div>
-
-          <!-- Separate Registration Link / Section -->
-          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#FDE8EC] text-[#D88390] border border-[#F4ACB7]/50 text-xs font-semibold">
-            <i data-lucide="badge-percent" class="w-3.5 h-3.5"></i>
-            <span>ระบบสมาชิก:</span>
-            <a href="#register-modal" id="btnOpenRegisterModal" class="underline hover:text-[#7B4B27] transition-colors">
-              สมัครสมาชิก / จัดการสิทธิ์
-            </a>
           </div>
         </div>
 
@@ -282,9 +266,8 @@
           </button>
         </div>
 
-        <!-- App Filter Chips Container (Scrollable) -->
+        <!-- App Filter Chips Container -->
         <div class="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs" id="appFilterChipsList">
-          <!-- Dynamically populated chips -->
           <button type="button" data-app="all" class="app-chip active px-3 py-1 rounded-lg border-2 border-[#7B4B27] bg-[#7B4B27] text-white font-bold whitespace-nowrap">
             ทั้งหมด
           </button>
@@ -310,12 +293,11 @@
               </tr>
             </thead>
             <tbody id="accountsTableBody" class="divide-y divide-[#EADBC8]/70 text-[#4A3525]">
-              <!-- Dynamically Populated -->
               <tr>
                 <td colspan="8" class="py-12 text-center text-[#8C7A6B]">
                   <div class="flex flex-col items-center justify-center gap-2">
                     <i data-lucide="inbox" class="w-8 h-8 text-[#8C7A6B]"></i>
-                    <span>ยังไม่มีบัญชีที่สร้างไว้ กดปุ่ม "สร้างเมลใหม่" เพื่อเริ่มต้น</span>
+                    <span>ยังไม่มีบัญชีที่สร้างไว้ในร้านของคุณ กดปุ่ม "สร้างเมลใหม่" เพื่อเริ่มต้น</span>
                   </div>
                 </td>
               </tr>
@@ -327,7 +309,7 @@
     </main>
 
     <!-- ============================================================== -->
-    <!-- VIEW 2: UNIVERSAL OTP TAB (General Purpose)                    -->
+    <!-- VIEW 2: UNIVERSAL OTP TAB                                      -->
     <!-- ============================================================== -->
     <div id="viewUniversal" class="hidden flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6">
       <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -345,7 +327,7 @@
             <form id="emailForm" class="space-y-3 text-xs">
               <div>
                 <label for="emailInput" class="block font-semibold text-[#583116] mb-1">ที่อยู่อีเมล</label>
-                <input type="email" id="emailInput" placeholder="user@gmail.com, user@hotmail.com หรืออื่นๆ" required
+                <input type="email" id="emailInput" placeholder="user@gmail.com หรืออื่นๆ" required
                   class="w-full px-3 py-2 bg-[#FAF6F0] border-2 border-[#EADBC8] rounded-xl font-mono text-[#4A3525]">
               </div>
 
@@ -408,7 +390,7 @@
   <!-- 3. MODALS                                                      -->
   <!-- ============================================================== -->
 
-  <!-- Modal: สร้างบัญชีใหม่ (Create Account Modal) -->
+  <!-- Modal: สร้างบัญชีใหม่ -->
   <div id="modalCreateAccount" class="fixed inset-0 bg-[#4A3525]/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
     <div class="bg-white border-2 border-[#EADBC8] rounded-3xl max-w-xl w-full p-6 sm:p-7 shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto">
       <div class="flex items-center justify-between border-b-2 border-[#EADBC8] pb-3">
@@ -451,7 +433,7 @@
             class="w-full px-3 py-2.5 bg-[#FAF6F0] border-2 border-[#EADBC8] rounded-2xl font-mono text-[#4A3525] focus:outline-none focus:border-[#7B4B27]">
         </div>
 
-        <!-- Duration Package (Requirement 2: 1 วัน, 7 วัน, 30 วัน, อื่นๆ) -->
+        <!-- Duration Package -->
         <div>
           <label class="block font-semibold text-[#583116] mb-1.5">
             เลือกระยะเวลาการใช้งาน (อายุแอค)
@@ -480,7 +462,7 @@
           </div>
         </div>
 
-        <!-- Premium Apps Selection (Requirement 3: Multi-select & Add custom apps) -->
+        <!-- Multi-select Apps -->
         <div>
           <div class="flex items-center justify-between mb-1.5">
             <label class="font-semibold text-[#583116]">
@@ -491,10 +473,7 @@
               <span>เพิ่มแอปใหม่</span>
             </button>
           </div>
-
-          <!-- Multi-select App Badges Grid -->
           <div class="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto p-1.5 border-2 border-[#EADBC8] rounded-2xl bg-[#FAF6F0]/60" id="multiAppSelectorList">
-            <!-- Dynamically populated checkbox badges -->
           </div>
           <p class="text-[10px] text-[#8C7A6B] mt-1">* คลิกเพื่อเลือก/ยกเลิก สามารถเลือกพร้อมกันได้หลายแอป</p>
         </div>
@@ -514,7 +493,7 @@
     </div>
   </div>
 
-  <!-- Modal: เพิ่มแอปใหม่ (Add Custom App Modal) -->
+  <!-- Modal: เพิ่มแอปใหม่ -->
   <div id="modalAddApp" class="fixed inset-0 bg-[#4A3525]/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
     <div class="bg-white border-2 border-[#EADBC8] rounded-3xl max-w-sm w-full p-6 shadow-xl space-y-4 text-xs">
       <div class="flex items-center justify-between border-b border-[#EADBC8] pb-2">
@@ -535,9 +514,9 @@
     </div>
   </div>
 
-  <!-- Modal: กล่องดึง OTP เฉพาะบัญชี (Targeted Account OTP Modal) -->
+  <!-- Modal: กล่องดึง OTP เฉพาะบัญชี -->
   <div id="modalTargetedOtp" class="fixed inset-0 bg-[#4A3525]/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-    <div class="bg-white border-2 border-[#EADBC8] rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 text-center">
+    <div class="bg-white border-2 border-[#EADBC8] rounded-3xl max-w-xl w-full p-6 shadow-2xl space-y-4 text-center">
       <div class="flex items-center justify-between border-b-2 border-[#EADBC8] pb-3 text-left">
         <div>
           <h3 class="font-bold text-sm text-[#4A3525] flex items-center gap-2">
@@ -549,7 +528,6 @@
         <button id="btnCloseTargetedOtp" class="text-[#8C7A6B] hover:text-[#4A3525]"><i data-lucide="x" class="w-4 h-4"></i></button>
       </div>
 
-      <!-- OTP Display -->
       <div class="py-6 px-4 rounded-2xl bg-[#FAF6F0] border-2 border-[#EADBC8] flex flex-col items-center justify-center">
         <div id="targetOtpLoading" class="flex flex-col items-center py-6 text-[#7B4B27] gap-2">
           <i data-lucide="loader-2" class="w-7 h-7 animate-spin"></i>
@@ -575,7 +553,6 @@
         </div>
       </div>
 
-      <!-- Email Details -->
       <div id="targetEmailDetails" class="hidden space-y-1 p-3 bg-[#F8F3EC] rounded-xl border border-[#EADBC8] text-xs text-left">
         <div class="flex justify-between"><span class="text-[#8C7A6B]">หัวข้อ:</span><span id="targetSubject" class="font-semibold truncate"></span></div>
         <div class="flex justify-between"><span class="text-[#8C7A6B]">ผู้ส่ง:</span><span id="targetFrom" class="font-mono truncate"></span></div>
@@ -596,33 +573,11 @@
     </div>
   </div>
 
-  <!-- Modal: ลิงก์สมัครสมาชิกแยก (Membership Modal Placeholder - Requirement 4) -->
-  <div id="modalRegister" class="fixed inset-0 bg-[#4A3525]/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-    <div class="bg-white border-2 border-[#EADBC8] rounded-3xl max-w-md w-full p-6 shadow-xl space-y-4 text-center">
-      <div class="flex items-center justify-between border-b border-[#EADBC8] pb-2">
-        <h3 class="font-bold text-sm text-[#4A3525]">ระบบสมัครสมาชิก (Membership Portal)</h3>
-        <button id="btnCloseRegisterModal" class="text-[#8C7A6B] hover:text-[#4A3525]"><i data-lucide="x" class="w-4 h-4"></i></button>
-      </div>
-
-      <div class="p-6 bg-[#FAF6F0] rounded-2xl border-2 border-[#EADBC8] space-y-2">
-        <i data-lucide="sparkles" class="w-8 h-8 text-[#7B4B27] mx-auto"></i>
-        <h4 class="font-bold text-sm text-[#7B4B27]">ลิงก์สมัครสมาชิกแยกสำหรับลูกค้า</h4>
-        <p class="text-xs text-[#8C7A6B] leading-relaxed">
-          ส่วนนี้ถูกแยกออกมาเพื่อรองรับระบบสมัครสมาชิกและแพ็กเกจลูกค้าในอนาคต ตามที่แจ้งไว้ว่า "อันนี้ค่อยทำ"
-        </p>
-      </div>
-
-      <button type="button" id="btnDismissRegister" class="w-full py-2.5 rounded-xl btn-cute-primary font-bold text-xs">
-        เข้าใจแล้ว ปิดหน้าต่าง
-      </button>
-    </div>
-  </div>
-
-  <!-- Modal: ตั้งค่าเซิร์ฟเวอร์โดเมน (Domain Settings Modal) -->
+  <!-- Modal: ตั้งค่าเซิร์ฟเวอร์โดเมน -->
   <div id="modalDomainSettings" class="fixed inset-0 bg-[#4A3525]/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
     <div class="bg-white border-2 border-[#EADBC8] rounded-3xl max-w-lg w-full p-6 shadow-xl space-y-4 text-xs">
       <div class="flex items-center justify-between border-b border-[#EADBC8] pb-2">
-        <h3 class="font-bold text-sm text-[#4A3525]">ตั้งค่าโฮสต์เมล @bunnieschi.com</h3>
+        <h3 class="font-bold text-sm text-[#4A3525]">ตั้งค่าโฮสต์เมลร้านค้า</h3>
         <button id="btnCloseDomainSettings" class="text-[#8C7A6B] hover:text-[#4A3525]"><i data-lucide="x" class="w-4 h-4"></i></button>
       </div>
 
@@ -643,17 +598,17 @@
         <div class="p-3 bg-[#FFF9DB] border-2 border-[#F9D776] rounded-2xl space-y-2">
           <label class="flex items-center gap-2 cursor-pointer font-bold text-[#7B4B27]">
             <input type="checkbox" id="setUseCatchAll" checked class="rounded border-[#EADBC8] text-[#7B4B27]">
-            <span>เปิดใช้ระบบกล่องรวม Catch-All (แนะนำ)</span>
+            <span>เปิดใช้ระบบกล่องรวม Catch-All</span>
           </label>
           <div id="catchAllInputs" class="space-y-2 pt-1 border-t border-[#EADBC8]">
             <div>
-              <label class="block font-semibold text-[#583116] mb-0.5">อีเมลโฮสต์กลาง (Catch-All Email)</label>
+              <label class="block font-semibold text-[#583116] mb-0.5">อีเมลโฮสต์กลาง</label>
               <input type="email" id="setCatchAllEmail" value="mikibun@bunnieschi.com"
                 class="w-full px-3 py-2 bg-white border-2 border-[#EADBC8] rounded-xl font-mono text-[#4A3525]">
             </div>
             <div>
               <label class="block font-semibold text-[#583116] mb-0.5">รหัสผ่านของโฮสต์กลาง</label>
-              <input type="password" id="setCatchAllPassword" placeholder="รหัสผ่านอีเมล mikibun@bunnieschi.com"
+              <input type="password" id="setCatchAllPassword" placeholder="รหัสผ่านอีเมลโฮสต์กลาง"
                 class="w-full px-3 py-2 bg-white border-2 border-[#EADBC8] rounded-xl font-mono text-[#4A3525]">
             </div>
           </div>
@@ -666,11 +621,11 @@
     </div>
   </div>
 
-  <!-- Modal: เปลี่ยนรหัสผ่านแอดมิน -->
+  <!-- Modal: เปลี่ยนรหัสผ่าน -->
   <div id="modalChangePass" class="fixed inset-0 bg-[#4A3525]/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
     <div class="bg-white border-2 border-[#EADBC8] rounded-3xl max-w-sm w-full p-6 shadow-xl space-y-4 text-xs">
       <div class="flex items-center justify-between border-b border-[#EADBC8] pb-2">
-        <h3 class="font-bold text-sm text-[#4A3525]">เปลี่ยนรหัสผ่านเข้าเว็บ</h3>
+        <h3 class="font-bold text-sm text-[#4A3525]">เปลี่ยนรหัสผ่านร้านค้า</h3>
         <button id="btnCloseChangePass" class="text-[#8C7A6B] hover:text-[#4A3525]"><i data-lucide="x" class="w-4 h-4"></i></button>
       </div>
 
@@ -680,7 +635,7 @@
           <input type="password" id="chgCurrentPass" required class="w-full px-3 py-2 bg-[#FAF6F0] border-2 border-[#EADBC8] rounded-xl">
         </div>
         <div>
-          <label class="block font-semibold text-[#583116] mb-1">ชื่อผู้ใช้ใหม่ (เว้นว่างเพื่อใช้เดิม)</label>
+          <label class="block font-semibold text-[#583116] mb-1">ชื่อร้านใหม่ (เว้นว่างเพื่อใช้เดิม)</label>
           <input type="text" id="chgNewUser" class="w-full px-3 py-2 bg-[#FAF6F0] border-2 border-[#EADBC8] rounded-xl">
         </div>
         <div>
@@ -694,7 +649,6 @@
     </div>
   </div>
 
-  <!-- Toast Notification Container -->
   <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
 
   <script src="app.js"></script>

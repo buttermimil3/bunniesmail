@@ -1,0 +1,101 @@
+// Bunnieschi Shop - Shop Registration Client Logic
+
+document.addEventListener('DOMContentLoaded', () => {
+  if (window.lucide) lucide.createIcons();
+
+  const registerForm = document.getElementById('registerForm');
+  const shopNameInput = document.getElementById('shopNameInput');
+  const shopEmailInput = document.getElementById('shopEmailInput');
+  const shopPassInput = document.getElementById('shopPassInput');
+  const shopConfirmPassInput = document.getElementById('shopConfirmPassInput');
+  const registerError = document.getElementById('registerError');
+  const registerErrorText = document.getElementById('registerErrorText');
+  const btnRegisterSubmit = document.getElementById('btnRegisterSubmit');
+  const toastContainer = document.getElementById('toastContainer');
+
+  registerForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    registerError.classList.add('hidden');
+
+    const shopName = shopNameInput.value.trim();
+    const email = shopEmailInput.value.trim();
+    const password = shopPassInput.value.trim();
+    const confirmPass = shopConfirmPassInput.value.trim();
+
+    if (!shopName || !email || !password) {
+      showError('กรุณากรอกข้อมูลให้ครบถ้วน');
+      return;
+    }
+
+    if (password.length < 6) {
+      showError('รหัสผ่านต้องมีความยาวอย่างน้อย 6 ตัวอักษร');
+      return;
+    }
+
+    if (password !== confirmPass) {
+      showError('รหัสผ่านและการยืนยันรหัสผ่านไม่ตรงกัน');
+      return;
+    }
+
+    btnRegisterSubmit.disabled = true;
+    btnRegisterSubmit.innerHTML = `
+      <i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>
+      <span>กำลังสร้างบัญชีร้านค้า...</span>
+    `;
+    if (window.lucide) lucide.createIcons();
+
+    try {
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ shopName, email, password })
+      });
+
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || 'การสมัครสมาชิกล้มเหลว');
+      }
+
+      // Save token and auto-login
+      localStorage.setItem('bunnieschi_token', data.token);
+      showToast(`สมัครร้านค้า "${data.shop.shopName}" สำเร็จ! กำลังพาท่านเข้าสู่ระบบ...`, 'success');
+
+      setTimeout(() => {
+        window.location.href = 'index.html';
+      }, 1200);
+
+    } catch (err) {
+      showError(err.message);
+    } finally {
+      btnRegisterSubmit.disabled = false;
+      btnRegisterSubmit.innerHTML = `
+        <i data-lucide="user-plus" class="w-4 h-4"></i>
+        <span>ยืนยันการสมัครสมาชิกร้านค้า</span>
+      `;
+      if (window.lucide) lucide.createIcons();
+    }
+  });
+
+  function showError(msg) {
+    registerErrorText.textContent = msg;
+    registerError.classList.remove('hidden');
+  }
+
+  function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = `toast px-4 py-2.5 rounded-2xl shadow-md text-xs font-bold flex items-center gap-2 border-2 pointer-events-auto ${
+      type === 'success'
+        ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+        : 'bg-rose-50 text-rose-800 border-rose-300'
+    }`;
+    toast.textContent = message;
+    toastContainer.appendChild(toast);
+
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      toast.style.transform = 'translateY(10px)';
+      toast.style.transition = 'all 0.2s ease-out';
+      setTimeout(() => toast.remove(), 200);
+    }, 2500);
+  }
+});
