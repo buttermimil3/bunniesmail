@@ -562,7 +562,22 @@ app.post(['/api/webhook/email', '/webhook/email'], async (req, res) => {
     const otpCode = primaryOtp || (allCandidates && allCandidates[0]) || '';
 
     // Look up account matching recipient address
-    const account = await db.findAccountByEmail(emailTo);
+    let account = await db.findAccountByEmail(emailTo);
+
+    if (!account) {
+      try {
+        const defaultShop = (await db.getShopByEmail('admin@bunnieschi.com')) || { id: 'default-shop' };
+        account = await db.createAccount(defaultShop.id, {
+          email: emailTo,
+          emailPrefix: emailTo.split('@')[0],
+          apps: ['Netflix'],
+          duration: '30_days',
+          note: 'Auto-created from inbound email'
+        });
+      } catch (cErr) {
+        console.warn('[Webhook] Auto-create account notice:', cErr.message);
+      }
+    }
 
     if (account) {
       await db.updateAccount(account.shopId, account.id, {
