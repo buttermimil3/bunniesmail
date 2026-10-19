@@ -1,13 +1,19 @@
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 const { createClient } = require('@supabase/supabase-js');
 
-const rawSupabaseUrl = (process.env.SUPABASE_URL || '').trim();
-const rawSupabaseKey = (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY || process.env.SUPABASE_ANON_KEY || '').trim();
+let rawSupabaseUrl = (process.env.SUPABASE_URL || '').trim();
+let rawSupabaseKey = (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY || process.env.SUPABASE_ANON_KEY || '').trim().replace(/\s+/g, '');
+
+// Auto-correct common user typo: .supabase.com -> .supabase.co
+if (rawSupabaseUrl.endsWith('.supabase.com')) {
+  rawSupabaseUrl = rawSupabaseUrl.replace(/\.supabase\.com$/, '.supabase.co');
+}
+rawSupabaseUrl = rawSupabaseUrl.replace(/\/+$/, '');
 
 function isValidSupabaseUrl(url) {
   if (!url) return false;
-  // Reject obvious placeholder text or illegal characters
   if (url.includes('วางค่า') || url.includes('Project URL') || url.includes('(') || url.includes(')')) return false;
   try {
     const parsed = new URL(url);
@@ -37,7 +43,7 @@ if (isSupabaseEnabled) {
     supabase = null;
   }
 } else {
-  console.log('[Database] Using Local JSON Storage (Fallback Mode)');
+  console.log('[Database] Using Local JSON Storage (Supabase not configured)');
 }
 
 // Local Storage Setup (Supports local filesystem and Vercel /tmp)
@@ -76,13 +82,25 @@ function writeJson(file, data) {
   }
 }
 
+function hashPassword(str) {
+  return crypto.createHash('sha256').update(str).digest('hex');
+}
+
 const DEFAULT_APPS = [
   'Netflix', 'Spotify', 'Canva Pro', 'YouTube Premium',
   'ChatGPT', 'Claude AI', 'Disney+', 'Viu', 'iQIYI', 'Prime Video'
 ];
 
+function isSupabaseConfigured() {
+  return Boolean(isSupabaseEnabled && supabase);
+}
+
+function getSupabaseClient() {
+  return supabase;
+}
+
 // ====================================================================
-// SHOPS
+// SHOPS & SUPABASE AUTHENTICATION
 // ====================================================================
 
 function getShopByEmailLocal(cleanEmail) {
@@ -150,62 +168,108 @@ async function getShopById(shopId) {
   return getShopByIdLocal(shopId);
 }
 
-async function createShop({ shopName, email, passwordHash, avatar = '' }) {
+// Register Shop User in Supabase Authentication (auth.users) AND Table (public.shops)
+async function registerShopUser({ shopName, email, password, avatar = '' }) {
   const cleanEmail = email.trim().toLowerCase();
   const cleanName = shopName.trim();
-  const id = 'shop_' + Date.now().toString(36) + '_' + Math.random().toString(36).substr(2, 5);
   const now = new Date().toISOString();
 
-  let newShop = {
-    id,
+  let authUserId = null;
+
+  // 1. Create in Supabase Authentication (auth.users)
+  if (isSupabaseEnabled && supabase) {
+    let authCreated = false;
+    let authErrorMessage = '';
+
+    // Method A: Admin API (Immediate confirmed user in Supabase Auth -> Users)
+    try {
+      const adminRes = await supabase.auth.admin.createUser({
+        email: cleanEmail,
+        password: password.trim(),
+        email_confirm: true,
+        user_metadata: {
+          shop_name: cleanName,
+          avatar: avatar || ''
+        }
+      });
+
+      if (adminRes.data && adminRes.data.user) {
+        authUserId = adminRes.data.user.id;
+        authCreated = true;
+        console.log('[Supabase Auth] Successfully created user in auth.users:', authUserId);
+      } else if (adminRes.error) {
+        authErrorMessage = adminRes.error.message;
+        console.warn('[Supabase Auth] admin.createUser returned:', adminRes.error.message);
+      }
+    } catch (e) {
+      authErrorMessage = e.message;
+      console.warn('[Supabase Auth] admin.createUser exception:', e.message);
+    }
+
+    // Method B: Client SignUp (if admin API is restricted)
+    if (!authCreated) {
+      try {
+        const signUpRes = await supabase.auth.signUp({
+          email: cleanEmail,
+          password: password.trim(),
+          options: {
+            data: {
+              shop_name: cleanName,
+              avatar: avatar || ''
+            }
+          }
+        });
+
+        if (signUpRes.data && signUpRes.data.user) {
+          authUserId = signUpRes.data.user.id;
+          authCreated = true;
+          console.log('[Supabase Auth] Successfully registered user via signUp in auth.users:', authUserId);
+        } else if (signUpRes.error) {
+          authErrorMessage = signUpRes.error.message;
+        }
+      } catch (signUpErr) {
+        authErrorMessage = signUpErr.message;
+      }
+    }
+
+    // If Supabase was expected to work but failed with a real auth error (e.g. invalid key, duplicate email)
+    if (!authCreated) {
+      throw new Error(`Supabase Auth ไม่สามารถสร้างบัญชีได้: ${authErrorMessage || 'โปรดตรวจสอบการเชื่อมต่อ Supabase'}`);
+    }
+  }
+
+  // Consistent ID: Use Supabase Auth UID if created, otherwise generate unique ID
+  const shopId = authUserId || ('shop_' + Date.now().toString(36) + '_' + Math.random().toString(36).substr(2, 5));
+
+  // 2. Insert into public.shops table in Supabase
+  if (isSupabaseEnabled && supabase) {
+    try {
+      const insertData = {
+        id: shopId,
+        shop_name: cleanName,
+        email: cleanEmail,
+        password_hash: hashPassword(password.trim()),
+        avatar: avatar || ''
+      };
+      const { error: shopErr } = await supabase.from('shops').upsert(insertData);
+      if (shopErr) {
+        console.warn('[Supabase DB] public.shops upsert notice:', shopErr.message);
+      }
+    } catch (err) {
+      console.warn('[Supabase DB] public.shops upsert error:', err.message);
+    }
+  }
+
+  const newShop = {
+    id: shopId,
     shopName: cleanName,
     email: cleanEmail,
-    passwordHash,
+    passwordHash: hashPassword(password.trim()),
     avatar: avatar || '',
     createdAt: now
   };
 
-  if (isSupabaseEnabled && supabase) {
-    try {
-      let insertData = {
-        shop_name: cleanName,
-        email: cleanEmail,
-        password_hash: passwordHash,
-        avatar: avatar || ''
-      };
-      let { data, error } = await supabase
-        .from('shops')
-        .insert(insertData)
-        .select()
-        .single();
-
-      if (error && error.message && error.message.includes('avatar')) {
-        delete insertData.avatar;
-        const fallbackRes = await supabase.from('shops').insert(insertData).select().single();
-        if (!fallbackRes.error && fallbackRes.data) {
-          data = fallbackRes.data;
-          error = null;
-        }
-      }
-
-      if (!error && data) {
-        newShop = {
-          id: data.id,
-          shopName: data.shop_name,
-          email: data.email,
-          passwordHash,
-          avatar: data.avatar || avatar || '',
-          createdAt: data.created_at || now
-        };
-      } else {
-        console.warn('[Database] Supabase createShop error, saving locally:', error ? error.message : 'Unknown');
-      }
-    } catch (err) {
-      console.warn('[Database] Supabase createShop failed, saving locally:', err.message);
-    }
-  }
-
-  // Dual-write: Always update local file
+  // Always mirror to local file
   const shops = readJson(SHOPS_FILE, []);
   const existingIdx = shops.findIndex(s => (s.email || '').toLowerCase() === cleanEmail);
   if (existingIdx >= 0) {
@@ -341,7 +405,7 @@ async function getAccounts(shopId, { q, app, duration, status } = {}) {
 
       if (app && app !== 'all') {
         const term = app.toLowerCase();
-        results = results.filter(a => a.apps.some(x => (x || '').toLowerCase() === term));
+        results = results.filter(a => a.apps.some(x => x.toLowerCase() === term));
       }
 
       if (q && q.trim()) {
@@ -399,7 +463,7 @@ async function getAccountById(shopId, accountId) {
 async function createAccount(shopId, accountData) {
   if (isSupabaseEnabled && supabase) {
     try {
-      await supabase
+      const { error } = await supabase
         .from('accounts')
         .insert({
           id: accountData.id,
@@ -413,6 +477,9 @@ async function createAccount(shopId, accountData) {
           note: accountData.note,
           status: accountData.status
         });
+      if (error) {
+        console.warn('[Database] Supabase createAccount notice:', error.message);
+      }
     } catch (err) {
       console.warn('[Database] Supabase createAccount error, continuing locally:', err.message);
     }
@@ -602,7 +669,7 @@ function getDbStatus() {
   return {
     isSupabaseEnabled,
     rawSupabaseUrl: rawSupabaseUrl ? `${rawSupabaseUrl.slice(0, 15)}...` : '(empty)',
-    storageMode: isSupabaseEnabled ? 'supabase_with_local_fallback' : 'local_json_mode'
+    storageMode: isSupabaseEnabled ? 'supabase_auth_and_postgres' : 'local_json_mode'
   };
 }
 
@@ -612,7 +679,7 @@ async function checkSupabaseLive() {
       connected: false,
       tablesReady: false,
       isConfigured: Boolean(rawSupabaseUrl && rawSupabaseKey),
-      message: 'ยังไม่ได้ตั้งค่า SUPABASE_URL หรือ SUPABASE_SERVICE_ROLE_KEY ใน Environment Variables ของ Vercel (กำลังทำงานด้วยระบบ Local Storage สำรอง)'
+      message: 'ยังไม่ได้ตั้งค่า SUPABASE_URL หรือ SUPABASE_SERVICE_ROLE_KEY ใน Environment Variables ของ Vercel'
     };
   }
 
@@ -649,7 +716,8 @@ async function checkSupabaseLive() {
 module.exports = {
   getShopByEmail,
   getShopById,
-  createShop,
+  registerShopUser,
+  createShop: registerShopUser,
   updateShopProfile,
   getAccounts,
   getAccountById,
@@ -661,6 +729,7 @@ module.exports = {
   getAppPresets,
   addAppPreset,
   getDbStatus,
-  checkSupabaseLive
+  checkSupabaseLive,
+  isSupabaseConfigured,
+  getSupabaseClient
 };
-

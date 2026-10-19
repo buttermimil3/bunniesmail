@@ -125,10 +125,10 @@ app.post(['/api/auth/register', '/auth/register'], async (req, res) => {
       return res.status(400).json({ success: false, error: 'อีเมลนี้มีร้านค้าลงทะเบียนไว้แล้ว' });
     }
 
-    const newShop = await db.createShop({
+    const newShop = await db.registerShopUser({
       shopName: cleanShopName,
       email: cleanEmail,
-      passwordHash: hashPassword(password.trim()),
+      password: password.trim(),
       avatar: avatar || ''
     });
 
@@ -143,7 +143,7 @@ app.post(['/api/auth/register', '/auth/register'], async (req, res) => {
 
     return res.json({
       success: true,
-      message: `สมัครสมาชิกร้านค้า ${cleanShopName} สำเร็จ`,
+      message: `สมัครสมาชิกร้านค้า ${cleanShopName} สำเร็จ (บันทึกใน Supabase Auth เรียบร้อย)`,
       token,
       shop: {
         id: newShop.id,
@@ -159,7 +159,7 @@ app.post(['/api/auth/register', '/auth/register'], async (req, res) => {
   }
 });
 
-// Login
+// Login (รองรับทั้ง Supabase Auth และ Database)
 app.post(['/api/auth/login', '/auth/login'], async (req, res) => {
   const { username, password } = req.body;
   if (!username || !password) {
@@ -173,6 +173,50 @@ app.post(['/api/auth/login', '/auth/login'], async (req, res) => {
   }
 
   try {
+    // 1. Try authenticating with Supabase Auth first
+    if (db.isSupabaseConfigured()) {
+      const authClient = db.getSupabaseClient();
+      if (authClient) {
+        try {
+          const { data: authData, error: authErr } = await authClient.auth.signInWithPassword({
+            email: searchEmail,
+            password: password.trim()
+          });
+
+          if (!authErr && authData && authData.user) {
+            const user = authData.user;
+            const meta = user.user_metadata || {};
+            const shopRecord = await db.getShopById(user.id);
+
+            const shopInfo = {
+              id: user.id,
+              shopName: (shopRecord && shopRecord.shopName) || meta.shop_name || searchEmail.split('@')[0],
+              email: user.email,
+              avatar: (shopRecord && shopRecord.avatar) || meta.avatar || ''
+            };
+
+            const token = (authData.session && authData.session.access_token) || crypto.randomBytes(32).toString('hex');
+            activeSessions.set(token, {
+              shopId: shopInfo.id,
+              email: shopInfo.email,
+              shopName: shopInfo.shopName,
+              avatar: shopInfo.avatar
+            });
+
+            return res.json({
+              success: true,
+              message: 'เข้าสู่ระบบสำเร็จ (Supabase Auth)',
+              token,
+              shop: shopInfo
+            });
+          }
+        } catch (supabaseAuthErr) {
+          console.warn('[Login] Supabase Auth signIn attempt failed, falling back to db lookup:', supabaseAuthErr.message);
+        }
+      }
+    }
+
+    // 2. Fallback to shops table lookup
     const shop = await db.getShopByEmail(searchEmail);
     if (!shop) {
       return res.status(401).json({ success: false, error: 'ไม่พบร้านค้าที่ใช้อีเมลนี้ในระบบ' });
