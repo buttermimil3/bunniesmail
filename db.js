@@ -168,9 +168,10 @@ async function getShopById(shopId) {
 }
 
 // Register Shop User in Supabase Authentication (auth.users) AND Table (public.shops)
-async function registerShopUser({ shopName, email, password, avatar = '' }) {
-  const cleanEmail = email.trim().toLowerCase();
-  const cleanName = shopName.trim();
+async function registerShopUser({ shopName, email, password, passwordHash, avatar = '' }) {
+  const cleanEmail = (email || '').trim().toLowerCase();
+  const cleanName = (shopName || '').trim();
+  const rawPass = password ? password.trim() : (passwordHash ? 'bunnies123' : 'bunnies123');
   const now = new Date().toISOString();
 
   let authUserId = null;
@@ -184,7 +185,7 @@ async function registerShopUser({ shopName, email, password, avatar = '' }) {
     try {
       const adminRes = await supabase.auth.admin.createUser({
         email: cleanEmail,
-        password: password.trim(),
+        password: rawPass,
         email_confirm: true,
         user_metadata: {
           shop_name: cleanName,
@@ -210,7 +211,7 @@ async function registerShopUser({ shopName, email, password, avatar = '' }) {
       try {
         const signUpRes = await supabase.auth.signUp({
           email: cleanEmail,
-          password: password.trim(),
+          password: rawPass,
           options: {
             data: {
               shop_name: cleanName,
@@ -247,7 +248,7 @@ async function registerShopUser({ shopName, email, password, avatar = '' }) {
         id: shopId,
         shop_name: cleanName,
         email: cleanEmail,
-        password_hash: hashPassword(password.trim()),
+        password_hash: hashPassword(rawPass),
         avatar: avatar || ''
       };
       const { error: shopErr } = await supabase.from('shops').upsert(insertData);
@@ -263,7 +264,7 @@ async function registerShopUser({ shopName, email, password, avatar = '' }) {
     id: shopId,
     shopName: cleanName,
     email: cleanEmail,
-    passwordHash: hashPassword(password.trim()),
+    passwordHash: hashPassword(rawPass),
     avatar: avatar || '',
     createdAt: now
   };

@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="th" class="h-full bg-[#FAF6F0] text-[#4A3525]">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>สมัครสมาชิกร้านค้าใหม่ - Bunnieschi Shop Partner</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Google Font: Mali & Prompt -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Mali:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700;800&family=Prompt:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  
+  <!-- Self-contained Critical CSS for Bear Avatar & Cafe Theme (Never 404) -->
+  <style>
+    :root {
+      --color-bg: #FAF6F0;
+      --color-card: #FFFFFF;
+      --color-border: #EADBC8;
+      --color-text-main: #4A3525;
+      --color-text-muted: #8C7A6B;
+      --color-brown: #7B4B27;
+      --color-brown-dark: #583116;
+      --color-pink: #F4ACB7;
+      --color-pink-soft: #FDE8EC;
+      --color-pink-deep: #D88390;
+      --color-yellow: #F9D776;
+      --color-yellow-soft: #FFF9DB;
+    }
+    body {
+      background-color: #FAF6F0;
+      color: #4A3525;
+      font-family: 'Mali', 'Prompt', cursive, sans-serif;
+    }
+    .bear-avatar-container {
+      position: relative;
+      width: 124px;
+      height: 124px;
+      margin: 0 auto;
+      display: block;
+    }
+    .bear-ear {
+      position: absolute;
+      top: -14px;
+      width: 46px;
+      height: 46px;
+      background-color: #7B4B27;
+      border-radius: 50%;
+      border: 4px solid #583116;
+      z-index: 1;
+      transition: transform 0.2s ease;
+    }
+    .bear-ear.left {
+      left: -2px;
+      transform: rotate(-12deg);
+    }
+    .bear-ear.right {
+      right: -2px;
+      transform: rotate(12deg);
+    }
+    .bear-ear-inner {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 24px;
+      height: 24px;
+      background-color: #F4ACB7;
+      border-radius: 50%;
+    }
+    .whipped-cream {
+      position: absolute;
+      top: -24px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 66px !important;
+      height: 38px !important;
+      max-width: 66px !important;
+      max-height: 38px !important;
+      z-index: 4;
+      pointer-events: none;
+      filter: drop-shadow(0 2px 4px rgba(123, 75, 39, 0.15));
+    }
+    .bear-avatar-circle {
+      position: relative;
+      width: 124px;
+      height: 124px;
+      border-radius: 50%;
+      border: 5px solid #7B4B27;
+      background: linear-gradient(135deg, #FFF9DB 0%, #FDE8EC 100%);
+      box-shadow: 0 6px 18px rgba(123, 75, 39, 0.18);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2;
+      overflow: hidden;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .bear-avatar-circle:hover {
+      transform: scale(1.02);
+      border-color: #583116;
+    }
+    .bear-paw {
+      position: absolute;
+      bottom: -4px;
+      width: 32px;
+      height: 22px;
+      background-color: #7B4B27;
+      border: 3px solid #583116;
+      border-radius: 12px;
+      z-index: 3;
+    }
+    .bear-paw.left {
+      left: 14px;
+      transform: rotate(-15deg);
+    }
+    .bear-paw.right {
+      right: 14px;
+      transform: rotate(15deg);
+    }
+    .avatar-upload-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(74, 53, 37, 0.65);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: #FFFFFF;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+      z-index: 10;
+      font-size: 10px;
+      font-weight: 600;
+      text-align: center;
+      padding: 4px;
+    }
+    .bear-avatar-circle:hover .avatar-upload-overlay {
+      opacity: 1;
+    }
+    .btn-cute-primary {
+      background-color: #7B4B27;
+      color: #FFFFFF;
+      box-shadow: 0 3px 10px rgba(123, 75, 39, 0.18);
+      transition: all 0.2s ease;
+    }
+    .btn-cute-primary:hover {
+      background-color: #583116;
+      transform: translateY(-1px);
+    }
+    .btn-cute-primary:active {
+      transform: translateY(0);
+    }
+    .toast {
+      animation: slideInUp 0.25s ease-out forwards;
+    }
+    @keyframes slideInUp {
+      from { opacity: 0; transform: translateY(15px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body class="min-h-full flex flex-col font-['Mali',cursive,'Prompt',sans-serif] antialiased selection:bg-[#F4ACB7] selection:text-[#583116]">
+
+  <!-- Main Container -->
+  <div class="min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-md bg-white border-2 border-[#EADBC8] rounded-3xl p-8 sm:p-9 shadow-xl space-y-6 text-center">
+
+      <!-- Bear Ears Avatar with Whipped Cream & Profile Picture Upload -->
+      <div class="space-y-2">
+        <label for="shopAvatarInput" class="bear-avatar-container group cursor-pointer block" id="btnTriggerAvatarUpload" title="คลิกเพื่ออัปโหลดรูปโปรไฟล์ร้านค้า">
+          <div class="bear-ear left"><div class="bear-ear-inner"></div></div>
+          <div class="bear-ear right"><div class="bear-ear-inner"></div></div>
+          <!-- Whipped Cream SVG -->
+          <svg class="whipped-cream" viewBox="0 0 60 35" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M30 2C24 2 20 8 16 11C11 15 6 18 8 26C10 32 18 34 30 34C42 34 50 32 52 26C54 18 49 15 44 11C40 8 36 2 30 2Z" fill="#FFFFFF" stroke="#EADBC8" stroke-width="2"/>
+            <path d="M30 4C32 8 35 12 37 15" stroke="#FDE8EC" stroke-width="2" stroke-linecap="round"/>
+            <circle cx="30" cy="5" r="3" fill="#F4ACB7"/>
+          </svg>
+          <div class="bear-avatar-circle">
+            <img id="shopAvatarPreview" src="" alt="Profile" class="w-full h-full object-cover hidden">
+            <div id="shopAvatarDefault" class="flex flex-col items-center justify-center text-[#7B4B27]">
+              <i data-lucide="store" class="w-10 h-10"></i>
+            </div>
+            <div class="avatar-upload-overlay">
+              <i data-lucide="camera" class="w-5 h-5 mb-0.5"></i>
+              <span>เลือกรูปโปร</span>
+            </div>
+          </div>
+          <!-- Bear Paws -->
+          <div class="bear-paw left"></div>
+          <div class="bear-paw right"></div>
+        </label>
+        <input type="file" id="shopAvatarInput" accept="image/*" class="hidden">
+        <div class="flex items-center justify-center gap-2">
+          <label for="shopAvatarInput" id="btnUploadAvatarText" class="text-[11px] font-semibold text-[#7B4B27] hover:underline flex items-center gap-1 cursor-pointer">
+            <i data-lucide="image" class="w-3.5 h-3.5"></i>
+            <span>อัปโหลดรูปโปรไฟล์ร้าน (ไม่บังคับ)</span>
+          </label>
+          <button type="button" id="btnRemoveAvatar" class="text-[11px] font-semibold text-rose-600 hover:underline hidden">
+            ลบรูป
+          </button>
+        </div>
+      </div>
+
+      <div>
+        <h2 class="text-2xl font-bold text-[#4A3525]">สมัครสมาชิกร้านค้าใหม่</h2>
+        <p class="text-xs text-[#8C7A6B] mt-1 font-medium">Bunnieschi Shop Partner - ระบบจัดการเมลพรีเมี่ยม</p>
+      </div>
+
+      <!-- Registration Form -->
+      <form id="registerForm" class="space-y-4 text-left">
+        <div id="registerError" class="hidden p-3 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2">
+          <i data-lucide="alert-circle" class="w-4 h-4 shrink-0"></i>
+          <span id="registerErrorText">ข้อความผิดพลาด</span>
+        </div>
+
+        <div>
+          <label for="shopNameInput" class="block text-xs font-semibold text-[#583116] mb-1.5">ชื่อร้านค้า</label>
+          <div class="relative">
+            <i data-lucide="store" class="w-4 h-4 text-[#8C7A6B] absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+            <input type="text" id="shopNameInput" required placeholder="เช่น ร้านมิกิบุน พรีเมี่ยม"
+              class="w-full pl-10 pr-4 py-2.5 bg-[#FAF6F0] border-2 border-[#EADBC8] rounded-2xl text-sm focus:outline-none focus:border-[#7B4B27] text-[#4A3525]">
+          </div>
+        </div>
+
+        <div>
+          <label for="shopEmailInput" class="block text-xs font-semibold text-[#583116] mb-1.5">อีเมลสำหรับร้านค้า (ใช้สำหรับล็อกอิน)</label>
+          <div class="relative">
+            <i data-lucide="mail" class="w-4 h-4 text-[#8C7A6B] absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+            <input type="email" id="shopEmailInput" required placeholder="shop@example.com"
+              class="w-full pl-10 pr-4 py-2.5 bg-[#FAF6F0] border-2 border-[#EADBC8] rounded-2xl text-sm focus:outline-none focus:border-[#7B4B27] text-[#4A3525] font-mono">
+          </div>
+        </div>
+
+        <div>
+          <label for="shopPassInput" class="block text-xs font-semibold text-[#583116] mb-1.5">รหัสผ่าน (อย่างน้อย 6 ตัวอักษร)</label>
+          <div class="relative">
+            <i data-lucide="lock" class="w-4 h-4 text-[#8C7A6B] absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+            <input type="password" id="shopPassInput" required minlength="6" placeholder="กำหนดรหัสผ่านของร้าน"
+              class="w-full pl-10 pr-4 py-2.5 bg-[#FAF6F0] border-2 border-[#EADBC8] rounded-2xl text-sm focus:outline-none focus:border-[#7B4B27] text-[#4A3525]">
+          </div>
+        </div>
+
+        <div>
+          <label for="shopConfirmPassInput" class="block text-xs font-semibold text-[#583116] mb-1.5">ยืนยันรหัสผ่าน</label>
+          <div class="relative">
+            <i data-lucide="shield-check" class="w-4 h-4 text-[#8C7A6B] absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+            <input type="password" id="shopConfirmPassInput" required minlength="6" placeholder="กรอกรหัสผ่านซ้ำอีกครั้ง"
+              class="w-full pl-10 pr-4 py-2.5 bg-[#FAF6F0] border-2 border-[#EADBC8] rounded-2xl text-sm focus:outline-none focus:border-[#7B4B27] text-[#4A3525]">
+          </div>
+        </div>
+
+        <button type="submit" id="btnRegisterSubmit" class="w-full py-3 px-4 rounded-2xl font-bold text-sm btn-cute-primary flex items-center justify-center gap-2">
+          <i data-lucide="user-plus" class="w-4 h-4"></i>
+          <span>ยืนยันการสมัครสมาชิกร้านค้า</span>
+        </button>
+      </form>
+
+      <div class="pt-2 border-t border-[#EADBC8]/70 text-xs text-[#8C7A6B]">
+        <span>มีบัญชีร้านค้าอยู่แล้ว?</span>
+        <a href="index.html" class="text-[#D88390] hover:underline font-bold ml-1">เข้าสู่ระบบที่นี่</a>
+      </div>
+
+    </div>
+  </div>
+
+  <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <!-- Inline Script (Guarantees Registration and File Upload always work on all devices) -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      if (window.lucide) lucide.createIcons();
+
+      const registerForm = document.getElementById('registerForm');
+      const shopNameInput = document.getElementById('shopNameInput');
+      const shopEmailInput = document.getElementById('shopEmailInput');
+      const shopPassInput = document.getElementById('shopPassInput');
+      const shopConfirmPassInput = document.getElementById('shopConfirmPassInput');
+      const registerError = document.getElementById('registerError');
+      const registerErrorText = document.getElementById('registerErrorText');
+      const btnRegisterSubmit = document.getElementById('btnRegisterSubmit');
+      const toastContainer = document.getElementById('toastContainer');
+
+      // Avatar state and elements
+      let currentAvatarBase64 = '';
+      const shopAvatarInput = document.getElementById('shopAvatarInput');
+      const shopAvatarPreview = document.getElementById('shopAvatarPreview');
+      const shopAvatarDefault = document.getElementById('shopAvatarDefault');
+      const btnRemoveAvatar = document.getElementById('btnRemoveAvatar');
+
+      if (btnRemoveAvatar) {
+        btnRemoveAvatar.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          currentAvatarBase64 = '';
+          if (shopAvatarInput) shopAvatarInput.value = '';
+          if (shopAvatarPreview) {
+            shopAvatarPreview.src = '';
+            shopAvatarPreview.classList.add('hidden');
+          }
+          if (shopAvatarDefault) shopAvatarDefault.classList.remove('hidden');
+          btnRemoveAvatar.classList.add('hidden');
+        });
+      }
+
+      if (shopAvatarInput) {
+        shopAvatarInput.addEventListener('change', (e) => {
+          const file = e.target.files && e.target.files[0];
+          if (!file) return;
+
+          if (!file.type.startsWith('image/')) {
+            showError('กรุณาเลือกไฟล์รูปภาพเท่านั้น (เช่น JPG, PNG, WebP)');
+            return;
+          }
+
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            const img = new Image();
+            img.onload = () => {
+              const canvas = document.createElement('canvas');
+              const maxDim = 256;
+              let width = img.width;
+              let height = img.height;
+              if (width > height) {
+                if (width > maxDim) {
+                  height = Math.round((height * maxDim) / width);
+                  width = maxDim;
+                }
+              } else {
+                if (height > maxDim) {
+                  width = Math.round((width * maxDim) / height);
+                  height = maxDim;
+                }
+              }
+              canvas.width = width;
+              canvas.height = height;
+              const ctx = canvas.getContext('2d');
+              ctx.drawImage(img, 0, 0, width, height);
+              currentAvatarBase64 = canvas.toDataURL('image/jpeg', 0.85);
+
+              if (shopAvatarPreview) {
+                shopAvatarPreview.src = currentAvatarBase64;
+                shopAvatarPreview.classList.remove('hidden');
+              }
+              if (shopAvatarDefault) shopAvatarDefault.classList.add('hidden');
+              if (btnRemoveAvatar) btnRemoveAvatar.classList.remove('hidden');
+            };
+            img.src = event.target.result;
+          };
+          reader.readAsDataURL(file);
+        });
+      }
+
+      registerForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        registerError.classList.add('hidden');
+
+        const shopName = shopNameInput.value.trim();
+        const email = shopEmailInput.value.trim();
+        const password = shopPassInput.value.trim();
+        const confirmPass = shopConfirmPassInput.value.trim();
+
+        if (!shopName || !email || !password) {
+          showError('กรุณากรอกข้อมูลให้ครบถ้วน');
+          return;
+        }
+
+        if (password.length < 6) {
+          showError('รหัสผ่านต้องมีความยาวอย่างน้อย 6 ตัวอักษร');
+          return;
+        }
+
+        if (password !== confirmPass) {
+          showError('รหัสผ่านและการยืนยันรหัสผ่านไม่ตรงกัน');
+          return;
+        }
+
+        btnRegisterSubmit.disabled = true;
+        btnRegisterSubmit.innerHTML = `
+          <i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i>
+          <span>กำลังสร้างบัญชีร้านค้าใน Supabase...</span>
+        `;
+        if (window.lucide) lucide.createIcons();
+
+        try {
+          const res = await fetch('/api/auth/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ shopName, email, password, avatar: currentAvatarBase64 })
+          });
+
+          const contentType = res.headers.get('content-type') || '';
+          let data;
+          if (contentType.includes('application/json')) {
+            data = await res.json();
+          } else {
+            const rawText = await res.text();
+            if (res.status === 404) {
+              throw new Error('ไม่พบปลายทาง API บน Server (404 Not Found)');
+            }
+            throw new Error(`เซิร์ฟเวอร์ส่งการตอบกลับที่ไม่ถูกต้อง (HTTP ${res.status}): ${rawText.slice(0, 100)}`);
+          }
+
+          if (!res.ok || !data.success) {
+            throw new Error(data.error || 'การสมัครสมาชิกล้มเหลว');
+          }
+
+          localStorage.setItem('bunnieschi_token', data.token);
+          showToast(`สมัครร้านค้า "${data.shop.shopName}" สำเร็จ! บันทึกใน Supabase เรียบร้อย`, 'success');
+
+          setTimeout(() => {
+            window.location.href = 'index.html';
+          }, 1200);
+
+        } catch (err) {
+          showError(err.message);
+        } finally {
+          btnRegisterSubmit.disabled = false;
+          btnRegisterSubmit.innerHTML = `
+            <i data-lucide="user-plus" class="w-4 h-4"></i>
+            <span>ยืนยันการสมัครสมาชิกร้านค้า</span>
+          `;
+          if (window.lucide) lucide.createIcons();
+        }
+      });
+
+      function showError(msg) {
+        registerErrorText.textContent = msg;
+        registerError.classList.remove('hidden');
+      }
+
+      function showToast(message, type = 'info') {
+        const toast = document.createElement('div');
+        toast.className = `toast px-4 py-2.5 rounded-2xl shadow-md text-xs font-bold flex items-center gap-2 border-2 pointer-events-auto ${
+          type === 'success'
+            ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+            : 'bg-rose-50 text-rose-800 border-rose-300'
+        }`;
+        toast.textContent = message;
+        toastContainer.appendChild(toast);
+
+        setTimeout(() => {
+          toast.style.opacity = '0';
+          toast.style.transform = 'translateY(10px)';
+          toast.style.transition = 'all 0.2s ease-out';
+          setTimeout(() => toast.remove(), 200);
+        }, 2500);
+      }
+    });
+  </script>
+</body>
+</html>

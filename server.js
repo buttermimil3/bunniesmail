@@ -4,6 +4,7 @@ const dotenv = require('dotenv');
 const { ImapFlow } = require('imapflow');
 const { simpleParser } = require('mailparser');
 const path = require('path');
+const fs = require('fs');
 const crypto = require('crypto');
 const db = require('./db');
 
@@ -27,7 +28,7 @@ async function initDefaultShop() {
       await db.createShop({
         shopName: 'Bunnieschi Shop',
         email: 'admin@bunnieschi.com',
-        passwordHash: hashPassword('bunnies123')
+        password: 'bunnies123'
       });
       console.log('[Auth] Default shop initialized (admin@bunnieschi.com / bunnies123)');
     }
@@ -38,11 +39,39 @@ async function initDefaultShop() {
 initDefaultShop();
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.static(__dirname));
 
-// Direct Web Page Routes
+// Direct Web Page Routes & Static Assets
+app.get('/style.css', (req, res) => {
+  res.type('text/css');
+  const p1 = path.join(__dirname, 'style.css');
+  const p2 = path.join(__dirname, 'public', 'style.css');
+  if (fs.existsSync(p1)) return res.sendFile(p1);
+  if (fs.existsSync(p2)) return res.sendFile(p2);
+  res.status(404).send('/* style.css not found */');
+});
+
+app.get('/register.js', (req, res) => {
+  res.type('application/javascript');
+  const p1 = path.join(__dirname, 'register.js');
+  const p2 = path.join(__dirname, 'public', 'register.js');
+  if (fs.existsSync(p1)) return res.sendFile(p1);
+  if (fs.existsSync(p2)) return res.sendFile(p2);
+  res.status(404).send('// register.js not found');
+});
+
+app.get('/app.js', (req, res) => {
+  res.type('application/javascript');
+  const p1 = path.join(__dirname, 'app.js');
+  const p2 = path.join(__dirname, 'public', 'app.js');
+  if (fs.existsSync(p1)) return res.sendFile(p1);
+  if (fs.existsSync(p2)) return res.sendFile(p2);
+  res.status(404).send('// app.js not found');
+});
+
 app.get('/register', (req, res) => {
   res.sendFile(path.join(__dirname, 'register.html'));
 });
