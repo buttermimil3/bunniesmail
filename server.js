@@ -529,6 +529,67 @@ app.delete('/api/accounts/:id', requireAuth, async (req, res) => {
 });
 
 // ====================================================================
+// 3.5 CLOUDFLARE INBOUND EMAIL WEBHOOK (Instant zero-credential OTP)
+// ====================================================================
+
+app.post(['/api/webhook/email', '/webhook/email'], async (req, res) => {
+  try {
+    const { to, from, raw, subject, text, html } = req.body || {};
+    console.log('[Webhook Inbound Email]', { to, from, subject });
+
+    let emailSubject = subject || '';
+    let emailFrom = from || '';
+    let emailTo = to || '';
+    let emailText = text || '';
+    let emailHtml = html || '';
+
+    if (raw) {
+      try {
+        const parsed = await simpleParser(raw);
+        emailSubject = parsed.subject || emailSubject;
+        emailFrom = (parsed.from && (parsed.from.text || parsed.from.value?.[0]?.address)) || emailFrom;
+        if (!emailTo && parsed.to) {
+          emailTo = parsed.to.text || (parsed.to.value && parsed.to.value[0]?.address) || '';
+        }
+        emailText = parsed.text || emailText;
+        emailHtml = parsed.html || emailHtml;
+      } catch (pErr) {
+        console.warn('[Webhook] simpleParser notice:', pErr.message);
+      }
+    }
+
+    const { primaryOtp, allCandidates } = extractOtp(emailSubject, emailText);
+    const otpCode = primaryOtp || (allCandidates && allCandidates[0]) || '';
+
+    // Look up account matching recipient address
+    const account = await db.findAccountByEmail(emailTo);
+
+    if (account) {
+      await db.updateAccount(account.shopId, account.id, {
+        lastOtp: {
+          code: otpCode,
+          allOtps: allCandidates,
+          subject: emailSubject || '(ไม่มีหัวข้อ)',
+          from: emailFrom || 'Cloudflare Inbound',
+          to: emailTo,
+          date: new Date().toISOString(),
+          bodyText: emailText.slice(0, 500),
+          bodyHtml: emailHtml || `<pre style="white-space: pre-wrap;">${escapeHtml(emailText)}</pre>`
+        }
+      });
+      console.log(`[Webhook] Stored OTP "${otpCode}" for account ${account.email}`);
+      return res.json({ success: true, matchedAccount: account.email, otp: otpCode });
+    } else {
+      console.log(`[Webhook] No registered account matched email: ${emailTo}`);
+      return res.json({ success: true, warning: 'Account not found in registered list', to: emailTo, otp: otpCode });
+    }
+  } catch (err) {
+    console.error('[Webhook] Process error:', err);
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ====================================================================
 // 4. TARGETED ACCOUNT OTP FETCH (Scoped by shopId)
 // ====================================================================
 
@@ -539,6 +600,28 @@ app.post('/api/accounts/:id/fetch-otp', requireAuth, async (req, res) => {
   const account = await db.getAccountById(shopId, id);
   if (!account) {
     return res.status(404).json({ success: false, error: 'ไม่พบบัญชีที่ระบุในร้านของคุณ' });
+  }
+
+  // 1. If an OTP was received via Cloudflare Webhook, return it immediately
+  if (account.lastOtp && account.lastOtp.code) {
+    return res.json({
+      success: true,
+      hasEmail: true,
+      accountEmail: account.email,
+      accountApps: account.apps || [account.app || 'Other'],
+      accountDuration: account.duration || '30_days',
+      data: {
+        subject: account.lastOtp.subject || '(ได้รับรหัสจาก Cloudflare)',
+        from: account.lastOtp.from || 'Cloudflare Inbound',
+        to: account.email,
+        date: account.lastOtp.date || new Date(),
+        otp: account.lastOtp.code,
+        allOtps: account.lastOtp.allOtps || [account.lastOtp.code],
+        snippet: account.lastOtp.bodyText ? account.lastOtp.bodyText.slice(0, 300) : `OTP: ${account.lastOtp.code}`,
+        bodyText: account.lastOtp.bodyText || '',
+        bodyHtml: account.lastOtp.bodyHtml || `<div>OTP: <strong>${account.lastOtp.code}</strong></div>`
+      }
+    });
   }
 
   const settings = await db.getSettings(shopId);
@@ -715,10 +798,33 @@ app.post('/api/accounts/:id/fetch-otp', requireAuth, async (req, res) => {
       errorMessage = `ไม่สามารถเชื่อมต่อ Mail Server (${host}:${port})`;
     }
 
-    return res.status(500).json({
-      success: false,
-      error: errorMessage,
-      details: err.message
+    // If account has an OTP received from Cloudflare Webhook, return it
+    if (account.lastOtp && account.lastOtp.code) {
+      return res.json({
+        success: true,
+        hasEmail: true,
+        accountEmail: account.email,
+        accountApps: account.apps || [account.app || 'Other'],
+        accountDuration: account.duration || '30_days',
+        data: {
+          subject: account.lastOtp.subject || '(ได้รับรหัสจาก Cloudflare)',
+          from: account.lastOtp.from || 'Cloudflare Inbound',
+          to: account.email,
+          date: account.lastOtp.date || new Date(),
+          otp: account.lastOtp.code,
+          allOtps: account.lastOtp.allOtps || [account.lastOtp.code],
+          snippet: account.lastOtp.bodyText ? account.lastOtp.bodyText.slice(0, 300) : `OTP: ${account.lastOtp.code}`,
+          bodyText: account.lastOtp.bodyText || '',
+          bodyHtml: account.lastOtp.bodyHtml || `<div>OTP: <strong>${account.lastOtp.code}</strong></div>`
+        }
+      });
+    }
+
+    return res.json({
+      success: true,
+      hasEmail: false,
+      accountEmail: account.email,
+      message: `ยังไม่มีอีเมลส่งถึง ${account.email} (หากกดส่งรหัสจากแอปแล้ว กรุณารอสักครู่แล้วกดรีเฟรชอีกครั้ง)`
     });
   } finally {
     try {

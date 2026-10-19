@@ -525,6 +525,46 @@ async function updateAccount(shopId, accountId, updates) {
   return accounts[idx];
 }
 
+async function findAccountByEmail(email) {
+  const cleanEmail = (email || '').trim().toLowerCase();
+  const cleanPrefix = cleanEmail.split('@')[0];
+
+  if (isSupabaseEnabled && supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('accounts')
+        .select('*')
+        .or(`email.ilike.%${cleanEmail}%,email.ilike.%${cleanPrefix}%`)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (!error && data) {
+        return {
+          id: data.id,
+          shopId: data.shop_id,
+          email: data.email,
+          emailPrefix: data.email_prefix,
+          password: data.password,
+          apps: Array.isArray(data.apps) ? data.apps : [data.apps || 'Other'],
+          duration: data.duration,
+          note: data.note,
+          status: data.status,
+          lastOtp: data.last_otp
+        };
+      }
+    } catch (err) {
+      console.warn('[Database] findAccountByEmail Supabase notice:', err.message);
+    }
+  }
+
+  const accounts = readJson(ACCOUNTS_FILE, []);
+  return accounts.find(a =>
+    (a.email || '').toLowerCase().includes(cleanPrefix) ||
+    (a.emailPrefix || '').toLowerCase() === cleanPrefix
+  ) || null;
+}
+
 async function deleteAccount(shopId, accountId) {
   if (isSupabaseEnabled && supabase) {
     try {
@@ -747,6 +787,7 @@ module.exports = {
   updateShopProfile,
   getAccounts,
   getAccountById,
+  findAccountByEmail,
   createAccount,
   updateAccount,
   deleteAccount,
