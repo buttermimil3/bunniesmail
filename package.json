@@ -4,8 +4,20 @@
   "description": "Bunnieschi Shop - Multi-tenant Email & OTP Hub for Premium Accounts",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "test": "node test/test-multitenant.js",
+    "test:otp": "node test/test-otp.js"
   },
+  "keywords": [
+    "otp",
+    "imap",
+    "email",
+    "supabase",
+    "vercel",
+    "bunnieschi"
+  ],
+  "author": "",
+  "license": "ISC",
   "dependencies": {
     "@supabase/supabase-js": "^2.49.1",
     "cors": "^2.8.5",

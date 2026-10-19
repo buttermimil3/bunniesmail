@@ -95,8 +95,8 @@ app.get(['/api/health', '/health'], (req, res) => {
 // ====================================================================
 
 // Shop Registration (สำหรับสมัครสมาชิกร้านค้าใหม่)
-app.post('/api/auth/register', async (req, res) => {
-  const { shopName, email, password } = req.body;
+app.post(['/api/auth/register', '/auth/register'], async (req, res) => {
+  const { shopName, email, password, avatar } = req.body;
 
   if (!shopName || !shopName.trim()) {
     return res.status(400).json({ success: false, error: 'กรุณาระบุชื่อร้านค้า' });
@@ -120,7 +120,8 @@ app.post('/api/auth/register', async (req, res) => {
     const newShop = await db.createShop({
       shopName: cleanShopName,
       email: cleanEmail,
-      passwordHash: hashPassword(password.trim())
+      passwordHash: hashPassword(password.trim()),
+      avatar: avatar || ''
     });
 
     // Auto login
@@ -128,7 +129,8 @@ app.post('/api/auth/register', async (req, res) => {
     activeSessions.set(token, {
       shopId: newShop.id,
       email: newShop.email,
-      shopName: newShop.shopName
+      shopName: newShop.shopName,
+      avatar: newShop.avatar || ''
     });
 
     return res.json({
@@ -138,7 +140,8 @@ app.post('/api/auth/register', async (req, res) => {
       shop: {
         id: newShop.id,
         shopName: newShop.shopName,
-        email: newShop.email
+        email: newShop.email,
+        avatar: newShop.avatar || ''
       }
     });
 

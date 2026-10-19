@@ -2,8 +2,12 @@
   "version": 2,
   "rewrites": [
     {
-      "source": "/(.*)",
-      "destination": "/server.js"
+      "source": "/register",
+      "destination": "/register.html"
+    },
+    {
+      "source": "/api/(.*)",
+      "destination": "/api"
     }
   ]
 }

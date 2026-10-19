@@ -309,6 +309,19 @@ function applyShopBranding(shop) {
     headerShopName.textContent = shop.shopName;
     heroShopName.textContent = shop.shopName;
   }
+  const heroShopAvatar = document.getElementById('heroShopAvatar');
+  const heroDefaultIcon = document.getElementById('heroDefaultIcon');
+  if (heroShopAvatar && heroDefaultIcon) {
+    if (shop && shop.avatar) {
+      heroShopAvatar.src = shop.avatar;
+      heroShopAvatar.classList.remove('hidden');
+      heroDefaultIcon.classList.add('hidden');
+    } else {
+      heroShopAvatar.src = '';
+      heroShopAvatar.classList.add('hidden');
+      heroDefaultIcon.classList.remove('hidden');
+    }
+  }
 }
 
 async function handleLogin(e) {

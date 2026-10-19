@@ -45,29 +45,32 @@ body {
 /* Bear Ears & Whipped Cream Avatar Container */
 .bear-avatar-container {
   position: relative;
-  width: 110px;
-  height: 110px;
+  width: 124px;
+  height: 124px;
   margin: 0 auto;
 }
 
-/* Bear Ears */
+/* Big Adorable Bear Ears */
 .bear-ear {
   position: absolute;
-  top: -8px;
-  width: 34px;
-  height: 34px;
+  top: -14px;
+  width: 46px;
+  height: 46px;
   background-color: #7B4B27;
   border-radius: 50%;
-  border: 3px solid #583116;
+  border: 4px solid #583116;
   z-index: 1;
+  transition: transform 0.2s ease;
 }
 
 .bear-ear.left {
-  left: 2px;
+  left: -2px;
+  transform: rotate(-12deg);
 }
 
 .bear-ear.right {
-  right: 2px;
+  right: -2px;
+  transform: rotate(12deg);
 }
 
 .bear-ear-inner {
@@ -75,8 +78,8 @@ body {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 18px;
-  height: 18px;
+  width: 24px;
+  height: 24px;
   background-color: #F4ACB7;
   border-radius: 50%;
 }
@@ -84,13 +87,14 @@ body {
 /* Whipped Cream Top */
 .whipped-cream {
   position: absolute;
-  top: -16px;
+  top: -24px;
   left: 50%;
   transform: translateX(-50%);
-  width: 52px;
-  height: 30px;
-  z-index: 3;
+  width: 66px;
+  height: 38px;
+  z-index: 4;
   pointer-events: none;
+  filter: drop-shadow(0 2px 4px rgba(123, 75, 39, 0.15));
 }
 
 /* Circular Avatar Frame */
@@ -99,14 +103,66 @@ body {
   width: 100%;
   height: 100%;
   border-radius: 50%;
-  border: 4px solid #7B4B27;
+  border: 5px solid #7B4B27;
   background: linear-gradient(135deg, #FFF9DB 0%, #FDE8EC 100%);
-  box-shadow: 0 4px 14px rgba(123, 75, 39, 0.12);
+  box-shadow: 0 6px 18px rgba(123, 75, 39, 0.18);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 2;
   overflow: hidden;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.bear-avatar-circle:hover {
+  transform: scale(1.02);
+  border-color: #583116;
+}
+
+/* Bear Paws hugging the circle */
+.bear-paw {
+  position: absolute;
+  bottom: -4px;
+  width: 32px;
+  height: 22px;
+  background-color: #7B4B27;
+  border: 3px solid #583116;
+  border-radius: 12px;
+  z-index: 3;
+}
+
+.bear-paw.left {
+  left: 14px;
+  transform: rotate(-15deg);
+}
+
+.bear-paw.right {
+  right: 14px;
+  transform: rotate(15deg);
+}
+
+/* Avatar Upload Overlay */
+.avatar-upload-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(74, 53, 37, 0.65);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #FFFFFF;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  z-index: 10;
+  font-size: 10px;
+  font-weight: 600;
+  text-align: center;
+  padding: 4px;
+}
+
+.bear-avatar-circle:hover .avatar-upload-overlay {
+  opacity: 1;
 }
 
 /* Duration card styles */

@@ -13,6 +13,84 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnRegisterSubmit = document.getElementById('btnRegisterSubmit');
   const toastContainer = document.getElementById('toastContainer');
 
+  // Avatar state and elements
+  let currentAvatarBase64 = '';
+  const shopAvatarInput = document.getElementById('shopAvatarInput');
+  const shopAvatarPreview = document.getElementById('shopAvatarPreview');
+  const shopAvatarDefault = document.getElementById('shopAvatarDefault');
+  const btnTriggerAvatarUpload = document.getElementById('btnTriggerAvatarUpload');
+  const btnUploadAvatarText = document.getElementById('btnUploadAvatarText');
+  const btnRemoveAvatar = document.getElementById('btnRemoveAvatar');
+
+  function openFilePicker() {
+    if (shopAvatarInput) shopAvatarInput.click();
+  }
+
+  if (btnTriggerAvatarUpload) btnTriggerAvatarUpload.addEventListener('click', openFilePicker);
+  if (btnUploadAvatarText) btnUploadAvatarText.addEventListener('click', openFilePicker);
+
+  if (btnRemoveAvatar) {
+    btnRemoveAvatar.addEventListener('click', () => {
+      currentAvatarBase64 = '';
+      if (shopAvatarInput) shopAvatarInput.value = '';
+      if (shopAvatarPreview) {
+        shopAvatarPreview.src = '';
+        shopAvatarPreview.classList.add('hidden');
+      }
+      if (shopAvatarDefault) shopAvatarDefault.classList.remove('hidden');
+      btnRemoveAvatar.classList.add('hidden');
+    });
+  }
+
+  if (shopAvatarInput) {
+    shopAvatarInput.addEventListener('change', (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+
+      if (!file.type.startsWith('image/')) {
+        showError('กรุณาเลือกไฟล์รูปภาพเท่านั้น (เช่น JPG, PNG, WebP)');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          // Resize via canvas to max 256x256 to keep payload small and fast
+          const canvas = document.createElement('canvas');
+          const maxDim = 256;
+          let width = img.width;
+          let height = img.height;
+          if (width > height) {
+            if (width > maxDim) {
+              height = Math.round((height * maxDim) / width);
+              width = maxDim;
+            }
+          } else {
+            if (height > maxDim) {
+              width = Math.round((width * maxDim) / height);
+              height = maxDim;
+            }
+          }
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          currentAvatarBase64 = canvas.toDataURL('image/jpeg', 0.85);
+
+          if (shopAvatarPreview) {
+            shopAvatarPreview.src = currentAvatarBase64;
+            shopAvatarPreview.classList.remove('hidden');
+          }
+          if (shopAvatarDefault) shopAvatarDefault.classList.add('hidden');
+          if (btnRemoveAvatar) btnRemoveAvatar.classList.remove('hidden');
+        };
+        img.src = event.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
   registerForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     registerError.classList.add('hidden');
@@ -48,7 +126,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ shopName, email, password })
+        body: JSON.stringify({ shopName, email, password, avatar: currentAvatarBase64 })
       });
 
       const contentType = res.headers.get('content-type') || '';

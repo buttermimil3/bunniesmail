@@ -20,18 +20,40 @@
   <div class="min-h-screen flex items-center justify-center p-4">
     <div class="w-full max-w-md bg-white border-2 border-[#EADBC8] rounded-3xl p-8 sm:p-9 shadow-xl space-y-6 text-center">
 
-      <!-- Bear Ears Avatar with Whipped Cream -->
-      <div class="bear-avatar-container">
-        <div class="bear-ear left"><div class="bear-ear-inner"></div></div>
-        <div class="bear-ear right"><div class="bear-ear-inner"></div></div>
-        <!-- Whipped Cream SVG -->
-        <svg class="whipped-cream" viewBox="0 0 60 35" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M30 2C24 2 20 8 16 11C11 15 6 18 8 26C10 32 18 34 30 34C42 34 50 32 52 26C54 18 49 15 44 11C40 8 36 2 30 2Z" fill="#FFFFFF" stroke="#EADBC8" stroke-width="2"/>
-          <path d="M30 4C32 8 35 12 37 15" stroke="#FDE8EC" stroke-width="2" stroke-linecap="round"/>
-          <circle cx="30" cy="5" r="3" fill="#F4ACB7"/>
-        </svg>
-        <div class="bear-avatar-circle">
-          <i data-lucide="store" class="w-10 h-10 text-[#7B4B27]"></i>
+      <!-- Bear Ears Avatar with Whipped Cream & Profile Picture Upload -->
+      <div class="space-y-2">
+        <div class="bear-avatar-container group cursor-pointer" id="btnTriggerAvatarUpload" title="คลิกเพื่ออัปโหลดรูปโปรไฟล์ร้านค้า">
+          <div class="bear-ear left"><div class="bear-ear-inner"></div></div>
+          <div class="bear-ear right"><div class="bear-ear-inner"></div></div>
+          <!-- Whipped Cream SVG -->
+          <svg class="whipped-cream" viewBox="0 0 60 35" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M30 2C24 2 20 8 16 11C11 15 6 18 8 26C10 32 18 34 30 34C42 34 50 32 52 26C54 18 49 15 44 11C40 8 36 2 30 2Z" fill="#FFFFFF" stroke="#EADBC8" stroke-width="2"/>
+            <path d="M30 4C32 8 35 12 37 15" stroke="#FDE8EC" stroke-width="2" stroke-linecap="round"/>
+            <circle cx="30" cy="5" r="3" fill="#F4ACB7"/>
+          </svg>
+          <div class="bear-avatar-circle">
+            <img id="shopAvatarPreview" src="" alt="Profile" class="w-full h-full object-cover hidden">
+            <div id="shopAvatarDefault" class="flex flex-col items-center justify-center text-[#7B4B27]">
+              <i data-lucide="store" class="w-10 h-10"></i>
+            </div>
+            <div class="avatar-upload-overlay">
+              <i data-lucide="camera" class="w-5 h-5 mb-0.5"></i>
+              <span>เลือกรูปโปร</span>
+            </div>
+          </div>
+          <!-- Bear Paws -->
+          <div class="bear-paw left"></div>
+          <div class="bear-paw right"></div>
+        </div>
+        <input type="file" id="shopAvatarInput" accept="image/*" class="hidden">
+        <div class="flex items-center justify-center gap-2">
+          <button type="button" id="btnUploadAvatarText" class="text-[11px] font-semibold text-[#7B4B27] hover:underline flex items-center gap-1">
+            <i data-lucide="image" class="w-3.5 h-3.5"></i>
+            <span>อัปโหลดรูปโปรไฟล์ร้าน (ไม่บังคับ)</span>
+          </button>
+          <button type="button" id="btnRemoveAvatar" class="text-[11px] font-semibold text-rose-600 hover:underline hidden">
+            ลบรูป
+          </button>
         </div>
       </div>
 

@@ -97,25 +97,37 @@ async function getShopById(shopId) {
   }
 }
 
-async function createShop({ shopName, email, passwordHash }) {
+async function createShop({ shopName, email, passwordHash, avatar = '' }) {
   const cleanEmail = email.trim().toLowerCase();
   const cleanName = shopName.trim();
 
   if (isSupabaseEnabled) {
-    const { data, error } = await supabase
+    let insertData = {
+      shop_name: cleanName,
+      email: cleanEmail,
+      password_hash: passwordHash,
+      avatar: avatar || ''
+    };
+    let { data, error } = await supabase
       .from('shops')
-      .insert({
-        shop_name: cleanName,
-        email: cleanEmail,
-        password_hash: passwordHash
-      })
+      .insert(insertData)
       .select()
       .single();
-    if (error) throw error;
+
+    if (error && error.message && error.message.includes('avatar')) {
+      delete insertData.avatar;
+      const fallbackRes = await supabase.from('shops').insert(insertData).select().single();
+      data = fallbackRes.data;
+      if (fallbackRes.error) throw fallbackRes.error;
+    } else if (error) {
+      throw error;
+    }
+
     return {
       id: data.id,
       shopName: data.shop_name,
       email: data.email,
+      avatar: data.avatar || avatar || '',
       createdAt: data.created_at
     };
   } else {
@@ -126,6 +138,7 @@ async function createShop({ shopName, email, passwordHash }) {
       shopName: cleanName,
       email: cleanEmail,
       passwordHash,
+      avatar: avatar || '',
       createdAt: new Date().toISOString()
     };
     shops.push(newShop);
