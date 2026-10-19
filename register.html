@@ -22,7 +22,7 @@
 
       <!-- Bear Ears Avatar with Whipped Cream & Profile Picture Upload -->
       <div class="space-y-2">
-        <div class="bear-avatar-container group cursor-pointer" id="btnTriggerAvatarUpload" title="คลิกเพื่ออัปโหลดรูปโปรไฟล์ร้านค้า">
+        <label for="shopAvatarInput" class="bear-avatar-container group cursor-pointer block" id="btnTriggerAvatarUpload" title="คลิกเพื่ออัปโหลดรูปโปรไฟล์ร้านค้า">
           <div class="bear-ear left"><div class="bear-ear-inner"></div></div>
           <div class="bear-ear right"><div class="bear-ear-inner"></div></div>
           <!-- Whipped Cream SVG -->
@@ -44,13 +44,13 @@
           <!-- Bear Paws -->
           <div class="bear-paw left"></div>
           <div class="bear-paw right"></div>
-        </div>
+        </label>
         <input type="file" id="shopAvatarInput" accept="image/*" class="hidden">
         <div class="flex items-center justify-center gap-2">
-          <button type="button" id="btnUploadAvatarText" class="text-[11px] font-semibold text-[#7B4B27] hover:underline flex items-center gap-1">
+          <label for="shopAvatarInput" id="btnUploadAvatarText" class="text-[11px] font-semibold text-[#7B4B27] hover:underline flex items-center gap-1 cursor-pointer">
             <i data-lucide="image" class="w-3.5 h-3.5"></i>
             <span>อัปโหลดรูปโปรไฟล์ร้าน (ไม่บังคับ)</span>
-          </button>
+          </label>
           <button type="button" id="btnRemoveAvatar" class="text-[11px] font-semibold text-rose-600 hover:underline hidden">
             ลบรูป
           </button>

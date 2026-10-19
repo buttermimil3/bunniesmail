@@ -248,6 +248,72 @@ function setupEventListeners() {
   btnCopyOtp.addEventListener('click', () => {
     copyToClipboard(otpCode.textContent.trim(), 'คัดลอกรหัส OTP เรียบร้อย');
   });
+
+  // Change Shop Profile Avatar from Dashboard
+  const heroAvatarInput = document.getElementById('heroAvatarInput');
+  if (heroAvatarInput) {
+    heroAvatarInput.addEventListener('change', async (e) => {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+
+      if (!file.type.startsWith('image/')) {
+        showToast('กรุณาเลือกไฟล์รูปภาพเท่านั้น', 'error');
+        return;
+      }
+
+      showToast('กำลังประมวลผลรูปโปรไฟล์...', 'info');
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = async () => {
+          const canvas = document.createElement('canvas');
+          const maxDim = 256;
+          let width = img.width;
+          let height = img.height;
+          if (width > height) {
+            if (width > maxDim) {
+              height = Math.round((height * maxDim) / width);
+              width = maxDim;
+            }
+          } else {
+            if (height > maxDim) {
+              width = Math.round((width * maxDim) / height);
+              height = maxDim;
+            }
+          }
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          const base64Avatar = canvas.toDataURL('image/jpeg', 0.85);
+
+          try {
+            const res = await fetch('/api/shop/profile', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${AUTH_TOKEN}`
+              },
+              body: JSON.stringify({ avatar: base64Avatar })
+            });
+            const data = await res.json();
+            if (!res.ok || !data.success) {
+              throw new Error(data.error || 'อัปเดตรูปไม่สำเร็จ');
+            }
+
+            if (currentShop) currentShop.avatar = base64Avatar;
+            applyShopBranding(currentShop);
+            showToast('อัปเดตรูปโปรไฟล์ร้านค้าเรียบร้อยแล้ว', 'success');
+          } catch (err) {
+            showToast(err.message, 'error');
+          }
+        };
+        img.src = event.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
 }
 
 function generateStrongPassword() {

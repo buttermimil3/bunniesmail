@@ -135,28 +135,41 @@
       <!-- ============================================================ -->
       <section class="bg-white border-2 border-[#EADBC8] rounded-3xl p-6 sm:p-8 shadow-sm text-center relative overflow-hidden">
         
-        <!-- Bear Profile Circle with Whipped Cream -->
-        <div class="bear-avatar-container mb-3">
-          <!-- Left Ear -->
-          <div class="bear-ear left"><div class="bear-ear-inner"></div></div>
-          <!-- Right Ear -->
-          <div class="bear-ear right"><div class="bear-ear-inner"></div></div>
-          <!-- Whipped Cream on Top (SVG) -->
-          <svg class="whipped-cream" viewBox="0 0 60 35" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M30 2C24 2 20 8 16 11C11 15 6 18 8 26C10 32 18 34 30 34C42 34 50 32 52 26C54 18 49 15 44 11C40 8 36 2 30 2Z" fill="#FFFFFF" stroke="#EADBC8" stroke-width="2"/>
-            <path d="M30 4C32 8 35 12 37 15" stroke="#FDE8EC" stroke-width="2" stroke-linecap="round"/>
-            <circle cx="30" cy="5" r="3" fill="#F4ACB7"/>
-          </svg>
-          <!-- Center Circle Avatar -->
-          <div class="bear-avatar-circle">
-            <img id="heroShopAvatar" src="" alt="Profile" class="w-full h-full object-cover hidden">
-            <div id="heroDefaultIcon" class="flex flex-col items-center justify-center text-[#7B4B27]">
-              <i data-lucide="store" class="w-10 h-10"></i>
+        <!-- Bear Profile Circle with Whipped Cream & Click to Change -->
+        <div class="space-y-1 mb-3">
+          <label for="heroAvatarInput" class="bear-avatar-container group cursor-pointer block" title="คลิกเพื่อเปลี่ยนรูปโปรไฟล์ร้านค้า">
+            <!-- Left Ear -->
+            <div class="bear-ear left"><div class="bear-ear-inner"></div></div>
+            <!-- Right Ear -->
+            <div class="bear-ear right"><div class="bear-ear-inner"></div></div>
+            <!-- Whipped Cream on Top (SVG) -->
+            <svg class="whipped-cream" viewBox="0 0 60 35" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M30 2C24 2 20 8 16 11C11 15 6 18 8 26C10 32 18 34 30 34C42 34 50 32 52 26C54 18 49 15 44 11C40 8 36 2 30 2Z" fill="#FFFFFF" stroke="#EADBC8" stroke-width="2"/>
+              <path d="M30 4C32 8 35 12 37 15" stroke="#FDE8EC" stroke-width="2" stroke-linecap="round"/>
+              <circle cx="30" cy="5" r="3" fill="#F4ACB7"/>
+            </svg>
+            <!-- Center Circle Avatar -->
+            <div class="bear-avatar-circle">
+              <img id="heroShopAvatar" src="" alt="Profile" class="w-full h-full object-cover hidden">
+              <div id="heroDefaultIcon" class="flex flex-col items-center justify-center text-[#7B4B27]">
+                <i data-lucide="store" class="w-10 h-10"></i>
+              </div>
+              <div class="avatar-upload-overlay">
+                <i data-lucide="camera" class="w-5 h-5 mb-0.5"></i>
+                <span>เปลี่ยนรูปโปร</span>
+              </div>
             </div>
+            <!-- Bear Paws -->
+            <div class="bear-paw left"></div>
+            <div class="bear-paw right"></div>
+          </label>
+          <input type="file" id="heroAvatarInput" accept="image/*" class="hidden">
+          <div class="flex items-center justify-center gap-2">
+            <label for="heroAvatarInput" class="text-[11px] font-semibold text-[#8C7A6B] hover:text-[#7B4B27] cursor-pointer inline-flex items-center gap-1 transition-colors">
+              <i data-lucide="camera" class="w-3.5 h-3.5"></i>
+              <span>เปลี่ยนรูปโปรไฟล์ร้าน</span>
+            </label>
           </div>
-          <!-- Bear Paws -->
-          <div class="bear-paw left"></div>
-          <div class="bear-paw right"></div>
         </div>
 
         <!-- Shop Name & Subtitle -->

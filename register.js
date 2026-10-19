@@ -22,15 +22,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const btnUploadAvatarText = document.getElementById('btnUploadAvatarText');
   const btnRemoveAvatar = document.getElementById('btnRemoveAvatar');
 
-  function openFilePicker() {
-    if (shopAvatarInput) shopAvatarInput.click();
-  }
-
-  if (btnTriggerAvatarUpload) btnTriggerAvatarUpload.addEventListener('click', openFilePicker);
-  if (btnUploadAvatarText) btnUploadAvatarText.addEventListener('click', openFilePicker);
-
   if (btnRemoveAvatar) {
-    btnRemoveAvatar.addEventListener('click', () => {
+    btnRemoveAvatar.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
       currentAvatarBase64 = '';
       if (shopAvatarInput) shopAvatarInput.value = '';
       if (shopAvatarPreview) {

@@ -85,9 +85,17 @@ function requireAuth(req, res, next) {
   next();
 }
 
-// Health Check Endpoint
-app.get(['/api/health', '/health'], (req, res) => {
-  res.json({ ok: true, status: 'running', service: 'Bunnieschi Mail Hub', time: new Date().toISOString() });
+// Health Check & Database Diagnostic Endpoint
+app.get(['/api/health', '/health', '/api/db-check'], async (req, res) => {
+  const supabaseLive = await db.checkSupabaseLive();
+  res.json({
+    ok: true,
+    status: 'running',
+    service: 'Bunnieschi Mail Hub',
+    db: db.getDbStatus(),
+    supabaseLive,
+    time: new Date().toISOString()
+  });
 });
 
 // ====================================================================
@@ -152,7 +160,7 @@ app.post(['/api/auth/register', '/auth/register'], async (req, res) => {
 });
 
 // Login
-app.post('/api/auth/login', async (req, res) => {
+app.post(['/api/auth/login', '/auth/login'], async (req, res) => {
   const { username, password } = req.body;
   if (!username || !password) {
     return res.status(400).json({ success: false, error: 'กรุณากรอกชื่อผู้ใช้หรืออีเมล และรหัสผ่าน' });
@@ -179,7 +187,8 @@ app.post('/api/auth/login', async (req, res) => {
     activeSessions.set(token, {
       shopId: shop.id,
       email: shop.email,
-      shopName: shop.shopName
+      shopName: shop.shopName,
+      avatar: shop.avatar || ''
     });
 
     return res.json({
@@ -189,7 +198,8 @@ app.post('/api/auth/login', async (req, res) => {
       shop: {
         id: shop.id,
         shopName: shop.shopName,
-        email: shop.email
+        email: shop.email,
+        avatar: shop.avatar || ''
       }
     });
 
@@ -200,7 +210,7 @@ app.post('/api/auth/login', async (req, res) => {
 });
 
 // Check Session
-app.get('/api/auth/check', (req, res) => {
+app.get(['/api/auth/check', '/auth/check'], (req, res) => {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return res.json({ authenticated: false });
@@ -214,13 +224,41 @@ app.get('/api/auth/check', (req, res) => {
 });
 
 // Logout
-app.post('/api/auth/logout', (req, res) => {
+app.post(['/api/auth/logout', '/auth/logout'], (req, res) => {
   const authHeader = req.headers.authorization;
   if (authHeader && authHeader.startsWith('Bearer ')) {
     const token = authHeader.split(' ')[1];
     activeSessions.delete(token);
   }
   res.json({ success: true, message: 'ออกจากระบบเรียบร้อย' });
+});
+
+// Update Shop Profile (Avatar & Name)
+app.post(['/api/shop/profile', '/shop/profile'], requireAuth, async (req, res) => {
+  const shopId = req.user.shopId;
+  const { avatar, shopName } = req.body;
+
+  try {
+    const updated = await db.updateShopProfile(shopId, { avatar, shopName });
+
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.split(' ')[1];
+      const session = activeSessions.get(token);
+      if (session) {
+        if (avatar !== undefined) session.avatar = avatar;
+        if (shopName) session.shopName = shopName;
+      }
+    }
+
+    res.json({
+      success: true,
+      message: 'อัปเดตข้อมูลร้านค้าเรียบร้อย',
+      shop: updated
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
 });
 
 // ====================================================================
