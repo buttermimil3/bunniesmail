@@ -51,7 +51,18 @@ document.addEventListener('DOMContentLoaded', () => {
         body: JSON.stringify({ shopName, email, password })
       });
 
-      const data = await res.json();
+      const contentType = res.headers.get('content-type') || '';
+      let data;
+      if (contentType.includes('application/json')) {
+        data = await res.json();
+      } else {
+        const rawText = await res.text();
+        if (res.status === 404) {
+          throw new Error('ไม่พบปลายทาง API บน Server (404 Not Found) - กรุณาตรวจสอบว่าได้อัปเดตไฟล์ vercel.json และโฟลเดอร์ api ขึ้น GitHub แล้ว');
+        }
+        throw new Error(`เซิร์ฟเวอร์ส่งการตอบกลับที่ไม่ถูกต้อง (HTTP ${res.status}): ${rawText.slice(0, 100)}`);
+      }
+
       if (!res.ok || !data.success) {
         throw new Error(data.error || 'การสมัครสมาชิกล้มเหลว');
       }
