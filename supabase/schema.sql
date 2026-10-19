@@ -30,13 +30,13 @@ CREATE INDEX IF NOT EXISTS idx_shops_email ON public.shops(email);
 CREATE TABLE IF NOT EXISTS public.shop_settings (
     shop_id TEXT PRIMARY KEY REFERENCES public.shops(id) ON DELETE CASCADE,
     domain TEXT DEFAULT 'bunnieschi.com',
-    imap_host TEXT DEFAULT 'mail.bunnieschi.com',
+    imap_host TEXT DEFAULT 'imap.secureserver.net',
     imap_port INTEGER DEFAULT 993,
     imap_secure BOOLEAN DEFAULT true,
     reject_unauthorized BOOLEAN DEFAULT false,
     use_catch_all BOOLEAN DEFAULT true,
     catch_all_email TEXT DEFAULT 'mikibun@bunnieschi.com',
-    catch_all_password TEXT DEFAULT '',
+    catch_all_password TEXT DEFAULT 'pamcake2547',
     updated_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
@@ -76,8 +76,8 @@ CREATE INDEX IF NOT EXISTS idx_app_presets_shop_id ON public.app_presets(shop_id
 CREATE OR REPLACE FUNCTION public.handle_new_shop()
 RETURNS TRIGGER AS $$
 BEGIN
-    INSERT INTO public.shop_settings (shop_id, domain, imap_host, imap_port, imap_secure, use_catch_all, catch_all_email)
-    VALUES (NEW.id, 'bunnieschi.com', 'mail.bunnieschi.com', 993, true, true, 'mikibun@bunnieschi.com')
+    INSERT INTO public.shop_settings (shop_id, domain, imap_host, imap_port, imap_secure, use_catch_all, catch_all_email, catch_all_password)
+    VALUES (NEW.id, 'bunnieschi.com', 'imap.secureserver.net', 993, true, true, 'mikibun@bunnieschi.com', 'pamcake2547')
     ON CONFLICT (shop_id) DO NOTHING;
 
     INSERT INTO public.app_presets (shop_id, name) VALUES
