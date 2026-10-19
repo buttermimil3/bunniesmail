@@ -1,0 +1,209 @@
+/* Cute Cafe / Bakery Theme - Bunnieschi Shop (@bunnieschi.com) */
+/* Palette: Warm Brown (#7B4B27), Pastel Pink (#F4ACB7), Butter Yellow (#FFE3A8), Soft Cream (#FAF6F0) */
+
+:root {
+  --color-bg: #FAF6F0;
+  --color-card: #FFFFFF;
+  --color-border: #EADBC8;
+  --color-text-main: #4A3525;
+  --color-text-muted: #8C7A6B;
+  --color-brown: #7B4B27;
+  --color-brown-dark: #583116;
+  --color-pink: #F4ACB7;
+  --color-pink-soft: #FDE8EC;
+  --color-pink-deep: #D88390;
+  --color-yellow: #F9D776;
+  --color-yellow-soft: #FFF9DB;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text-main);
+  font-family: 'Mali', 'Prompt', cursive, sans-serif;
+  letter-spacing: 0.01em;
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 7px;
+  height: 7px;
+}
+
+::-webkit-scrollbar-track {
+  background: #F3ECE2;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #D8C4B6;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #7B4B27;
+}
+
+/* Bear Ears & Whipped Cream Avatar Container */
+.bear-avatar-container {
+  position: relative;
+  width: 110px;
+  height: 110px;
+  margin: 0 auto;
+}
+
+/* Bear Ears */
+.bear-ear {
+  position: absolute;
+  top: -8px;
+  width: 34px;
+  height: 34px;
+  background-color: #7B4B27;
+  border-radius: 50%;
+  border: 3px solid #583116;
+  z-index: 1;
+}
+
+.bear-ear.left {
+  left: 2px;
+}
+
+.bear-ear.right {
+  right: 2px;
+}
+
+.bear-ear-inner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 18px;
+  height: 18px;
+  background-color: #F4ACB7;
+  border-radius: 50%;
+}
+
+/* Whipped Cream Top */
+.whipped-cream {
+  position: absolute;
+  top: -16px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 52px;
+  height: 30px;
+  z-index: 3;
+  pointer-events: none;
+}
+
+/* Circular Avatar Frame */
+.bear-avatar-circle {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 4px solid #7B4B27;
+  background: linear-gradient(135deg, #FFF9DB 0%, #FDE8EC 100%);
+  box-shadow: 0 4px 14px rgba(123, 75, 39, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  overflow: hidden;
+}
+
+/* Duration card styles */
+.duration-card {
+  border: 2px solid #EADBC8;
+  background-color: #FFFFFF;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.duration-card:hover {
+  border-color: #F4ACB7;
+  background-color: #FFF9F9;
+}
+
+.duration-card.selected {
+  border-color: #7B4B27;
+  background-color: #FFF9DB;
+  box-shadow: 0 3px 8px rgba(123, 75, 39, 0.1);
+}
+
+/* App Multi-select checkbox badge */
+.app-select-badge {
+  border: 2px solid #EADBC8;
+  background-color: #FFFFFF;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.app-select-badge:hover {
+  border-color: #F4ACB7;
+}
+
+.app-select-badge.selected {
+  border-color: #D88390;
+  background-color: #FDE8EC;
+  color: #7B4B27;
+  font-weight: 600;
+}
+
+/* Soft cute buttons */
+.btn-cute-primary {
+  background-color: #7B4B27;
+  color: #FFFFFF;
+  box-shadow: 0 3px 10px rgba(123, 75, 39, 0.18);
+  transition: all 0.2s ease;
+}
+
+.btn-cute-primary:hover {
+  background-color: #583116;
+  transform: translateY(-1px);
+}
+
+.btn-cute-primary:active {
+  transform: translateY(0);
+}
+
+.btn-cute-pink {
+  background-color: #F4ACB7;
+  color: #583116;
+  font-weight: 600;
+  box-shadow: 0 3px 10px rgba(244, 172, 183, 0.35);
+  transition: all 0.2s ease;
+}
+
+.btn-cute-pink:hover {
+  background-color: #F28482;
+  color: #FFFFFF;
+}
+
+.btn-cute-yellow {
+  background-color: #F9D776;
+  color: #583116;
+  font-weight: 600;
+  box-shadow: 0 3px 10px rgba(249, 215, 118, 0.3);
+  transition: all 0.2s ease;
+}
+
+.btn-cute-yellow:hover {
+  background-color: #FEE440;
+}
+
+/* Toast styling */
+.toast {
+  animation: slideInUp 0.25s ease-out forwards;
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

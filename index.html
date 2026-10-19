@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="th" class="h-full bg-[#FAF6F0] text-[#4A3525]">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bunnieschi Shop - ระบบจัดการเมลและ OTP พรีเมี่ยม (@bunnieschi.com)</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Google Font: Mali & Prompt (Cute & readable handwriting) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Mali:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700;800&family=Prompt:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="min-h-full flex flex-col font-['Mali',cursive,'Prompt',sans-serif] antialiased selection:bg-[#F4ACB7] selection:text-[#583116]">
+
+  <!-- ============================================================== -->
+  <!-- 1. LOGIN SCREEN OVERLAY (Shown when not authenticated)         -->
+  <!-- ============================================================== -->
+  <div id="loginSection" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#FAF6F0]/95 backdrop-blur-md">
+    <div class="w-full max-w-md bg-white border-2 border-[#EADBC8] rounded-3xl p-8 shadow-xl space-y-6 text-center">
+
+      <!-- Centered Bear Ears Avatar for Login -->
+      <div class="bear-avatar-container">
+        <div class="bear-ear left"><div class="bear-ear-inner"></div></div>
+        <div class="bear-ear right"><div class="bear-ear-inner"></div></div>
+        <!-- Whipped Cream SVG -->
+        <svg class="whipped-cream" viewBox="0 0 60 35" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M30 2C24 2 20 8 16 11C11 15 6 18 8 26C10 32 18 34 30 34C42 34 50 32 52 26C54 18 49 15 44 11C40 8 36 2 30 2Z" fill="#FFFFFF" stroke="#EADBC8" stroke-width="2"/>
+          <path d="M30 4C32 8 35 12 37 15" stroke="#FDE8EC" stroke-width="2" stroke-linecap="round"/>
+          <circle cx="30" cy="5" r="3" fill="#F4ACB7"/>
+        </svg>
+        <div class="bear-avatar-circle">
+          <i data-lucide="shield-check" class="w-10 h-10 text-[#7B4B27]"></i>
+        </div>
+      </div>
+
+      <div>
+        <h2 class="text-2xl font-bold text-[#4A3525]">Bunnieschi Shop</h2>
+        <p class="text-xs text-[#8C7A6B] mt-1">ระบบจัดการเมลพรีเมี่ยม @bunnieschi.com</p>
+      </div>
+
+      <!-- Login Form -->
+      <form id="loginForm" class="space-y-4 text-left">
+        <div id="loginError" class="hidden p-3 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2">
+          <i data-lucide="alert-circle" class="w-4 h-4 shrink-0"></i>
+          <span id="loginErrorText">ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง</span>
+        </div>
+
+        <div>
+          <label for="loginUser" class="block text-xs font-semibold text-[#583116] mb-1.5">ชื่อผู้ใช้งาน</label>
+          <div class="relative">
+            <i data-lucide="user" class="w-4 h-4 text-[#8C7A6B] absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+            <input type="text" id="loginUser" required value="admin"
+              class="w-full pl-10 pr-4 py-2.5 bg-[#FAF6F0]/80 border-2 border-[#EADBC8] rounded-2xl text-sm focus:outline-none focus:border-[#7B4B27] text-[#4A3525]">
+          </div>
+        </div>
+
+        <div>
+          <label for="loginPass" class="block text-xs font-semibold text-[#583116] mb-1.5">รหัสผ่าน</label>
+          <div class="relative">
+            <i data-lucide="lock" class="w-4 h-4 text-[#8C7A6B] absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+            <input type="password" id="loginPass" required placeholder="รหัสผ่านผู้ดูแลระบบ"
+              class="w-full pl-10 pr-4 py-2.5 bg-[#FAF6F0]/80 border-2 border-[#EADBC8] rounded-2xl text-sm focus:outline-none focus:border-[#7B4B27] text-[#4A3525]">
+          </div>
+        </div>
+
+        <button type="submit" id="btnLoginSubmit" class="w-full py-3 px-4 rounded-2xl font-bold text-sm btn-cute-primary flex items-center justify-center gap-2">
+          <i data-lucide="log-in" class="w-4 h-4"></i>
+          <span>เข้าสู่ระบบจัดการ</span>
+        </button>
+      </form>
+
+      <div class="pt-2 border-t border-[#EADBC8]/60">
+        <a href="#register" id="btnGoRegisterLogin" class="text-xs text-[#D88390] hover:underline font-semibold flex items-center justify-center gap-1">
+          <i data-lucide="user-plus" class="w-3.5 h-3.5"></i>
+          <span>สมัครสมาชิกใหม่ (แยกสำหรับลูกค้า)</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- 2. MAIN APPLICATION (Shown after authentication)               -->
+  <!-- ============================================================== -->
+  <div id="mainApp" class="hidden min-h-screen flex flex-col">
+
+    <!-- Top Navigation -->
+    <header class="border-b-2 border-[#EADBC8] bg-white/90 backdrop-blur-md sticky top-0 z-40">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+
+        <!-- Left Nav Switch -->
+        <div class="flex items-center gap-2">
+          <button id="navTabAccounts" class="px-3.5 py-1.5 rounded-xl bg-[#7B4B27] text-white text-xs font-bold flex items-center gap-1.5 transition-all">
+            <i data-lucide="users" class="w-3.5 h-3.5"></i>
+            <span>จัดการเมลพรีเมี่ยม</span>
+          </button>
+          <button id="navTabUniversal" class="px-3.5 py-1.5 rounded-xl bg-[#FAF6F0] hover:bg-[#F3ECE2] text-[#7B4B27] text-xs font-semibold flex items-center gap-1.5 transition-all border border-[#EADBC8]">
+            <i data-lucide="mail" class="w-3.5 h-3.5"></i>
+            <span>รับ OTP เมลอื่นๆ</span>
+          </button>
+        </div>
+
+        <!-- Center Brand Name (compact for header) -->
+        <div class="hidden sm:flex items-center gap-2 font-bold text-[#7B4B27] text-sm">
+          <span>Bunnieschi Shop</span>
+          <span class="text-[11px] font-normal px-2 py-0.5 rounded-full bg-[#FFF9DB] text-[#7B4B27] border border-[#EADBC8]">
+            @bunnieschi.com
+          </span>
+        </div>
+
+        <!-- Right Quick Actions -->
+        <div class="flex items-center gap-2">
+          <button id="btnOpenDomainSettings" class="px-3 py-1.5 rounded-xl border border-[#EADBC8] bg-[#FAF6F0] hover:bg-[#F3ECE2] text-[#7B4B27] text-xs font-medium flex items-center gap-1.5 transition-all">
+            <i data-lucide="server" class="w-3.5 h-3.5 text-[#7B4B27]"></i>
+            <span class="hidden md:inline">โฮสต์เมล</span>
+          </button>
+          <button id="btnOpenChangePass" title="เปลี่ยนรหัสผ่านแอดมิน" class="p-2 rounded-xl border border-[#EADBC8] bg-[#FAF6F0] hover:bg-[#F3ECE2] text-[#7B4B27] transition-all">
+            <i data-lucide="key" class="w-4 h-4"></i>
+          </button>
+          <button id="btnLogout" class="px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs font-semibold flex items-center gap-1 transition-all">
+            <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
+            <span>ออก</span>
+          </button>
+        </div>
+
+      </div>
+    </header>
+
+    <!-- ============================================================== -->
+    <!-- VIEW 1: PREMIUM ACCOUNTS DASHBOARD                             -->
+    <!-- ============================================================== -->
+    <main id="viewAccounts" class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 space-y-6">
+
+      <!-- ============================================================ -->
+      <!-- CENTER HERO: BEAR EARS WITH WHIPPED CREAM & SHOP BRANDING     -->
+      <!-- ============================================================ -->
+      <section class="bg-white border-2 border-[#EADBC8] rounded-3xl p-6 sm:p-8 shadow-sm text-center relative overflow-hidden">
+        
+        <!-- Bear Profile Circle with Whipped Cream -->
+        <div class="bear-avatar-container mb-3">
+          <!-- Left Ear -->
+          <div class="bear-ear left"><div class="bear-ear-inner"></div></div>
+          <!-- Right Ear -->
+          <div class="bear-ear right"><div class="bear-ear-inner"></div></div>
+          <!-- Whipped Cream on Top (SVG) -->
+          <svg class="whipped-cream" viewBox="0 0 60 35" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M30 2C24 2 20 8 16 11C11 15 6 18 8 26C10 32 18 34 30 34C42 34 50 32 52 26C54 18 49 15 44 11C40 8 36 2 30 2Z" fill="#FFFFFF" stroke="#EADBC8" stroke-width="2"/>
+            <path d="M30 4C32 8 35 12 37 15" stroke="#FDE8EC" stroke-width="2" stroke-linecap="round"/>
+            <circle cx="30" cy="5" r="3" fill="#F4ACB7"/>
+          </svg>
+          <!-- Center Circle Avatar -->
+          <div class="bear-avatar-circle">
+            <i data-lucide="sparkles" class="w-10 h-10 text-[#7B4B27]"></i>
+          </div>
+        </div>
+
+        <!-- Shop Name & Subtitle -->
+        <h2 class="text-2xl sm:text-3xl font-bold text-[#4A3525]">Bunnieschi Shop</h2>
+        <p class="text-xs sm:text-sm text-[#8C7A6B] mt-1 font-medium">
+          ระบบคลังเมลและรับรหัส OTP อัตโนมัติ (@bunnieschi.com)
+        </p>
+
+        <!-- Host email badge & Membership registration link -->
+        <div class="flex flex-wrap items-center justify-center gap-2 mt-4 pt-4 border-t border-[#EADBC8]/70">
+          <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FFF9DB] text-[#7B4B27] border border-[#EADBC8] text-xs font-mono">
+            <i data-lucide="check-circle" class="w-3.5 h-3.5 text-emerald-600"></i>
+            <span>โฮสต์หลัก: <strong>mikibun@bunnieschi.com</strong></span>
+          </div>
+
+          <!-- Separate Registration Link / Section -->
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#FDE8EC] text-[#D88390] border border-[#F4ACB7]/50 text-xs font-semibold">
+            <i data-lucide="badge-percent" class="w-3.5 h-3.5"></i>
+            <span>ระบบสมาชิก:</span>
+            <a href="#register-modal" id="btnOpenRegisterModal" class="underline hover:text-[#7B4B27] transition-colors">
+              สมัครสมาชิก / จัดการสิทธิ์
+            </a>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- DYNAMIC STATS & DURATION BREAKDOWN PER APP                   -->
+      <!-- ============================================================ -->
+      <section class="space-y-3">
+        <!-- Main Stats Overview -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3 text-xs">
+          <div class="bg-white border-2 border-[#EADBC8] rounded-2xl p-3 flex flex-col justify-between">
+            <span class="text-[#8C7A6B]">ทั้งหมด</span>
+            <span class="text-2xl font-bold text-[#7B4B27] font-mono mt-1" id="statTotal">0</span>
+          </div>
+          <div class="bg-white border-2 border-[#EADBC8] rounded-2xl p-3 flex flex-col justify-between">
+            <span class="text-[#8C7A6B]">Netflix</span>
+            <span class="text-2xl font-bold text-red-600 font-mono mt-1" id="statNetflix">0</span>
+          </div>
+          <div class="bg-white border-2 border-[#EADBC8] rounded-2xl p-3 flex flex-col justify-between">
+            <span class="text-[#8C7A6B]">Spotify</span>
+            <span class="text-2xl font-bold text-emerald-600 font-mono mt-1" id="statSpotify">0</span>
+          </div>
+          <div class="bg-white border-2 border-[#EADBC8] rounded-2xl p-3 flex flex-col justify-between">
+            <span class="text-[#8C7A6B]">Canva Pro</span>
+            <span class="text-2xl font-bold text-cyan-600 font-mono mt-1" id="statCanva">0</span>
+          </div>
+          <div class="bg-white border-2 border-[#EADBC8] rounded-2xl p-3 flex flex-col justify-between">
+            <span class="text-[#8C7A6B]">YouTube</span>
+            <span class="text-2xl font-bold text-rose-600 font-mono mt-1" id="statYoutube">0</span>
+          </div>
+          <div class="bg-white border-2 border-[#EADBC8] rounded-2xl p-3 flex flex-col justify-between">
+            <span class="text-[#8C7A6B]">แอปอื่นๆ</span>
+            <span class="text-2xl font-bold text-[#7B4B27] font-mono mt-1" id="statOther">0</span>
+          </div>
+        </div>
+
+        <!-- Duration Breakdown Banner (Shows when an app filter is clicked) -->
+        <div id="durationBreakdownCard" class="hidden bg-[#FFF9DB] border-2 border-[#F9D776] rounded-2xl p-4 shadow-sm">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#EADBC8] pb-2.5 mb-2.5">
+            <div class="flex items-center gap-2">
+              <i data-lucide="pie-chart" class="w-4 h-4 text-[#7B4B27]"></i>
+              <span class="text-xs font-bold text-[#4A3525]">
+                แจกแจงอายุการใช้งานของแอป: <strong id="breakdownAppName" class="text-rose-600 font-mono">Netflix</strong>
+              </span>
+            </div>
+            <span class="text-[11px] text-[#8C7A6B]" id="breakdownAppTotal">รวม 0 บัญชี</span>
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+            <div class="bg-white p-2.5 rounded-xl border border-[#EADBC8] text-center">
+              <span class="text-[11px] text-[#8C7A6B] block">แอค 1 วัน</span>
+              <span class="text-lg font-bold text-[#7B4B27] font-mono" id="breakdownDay1">0</span>
+              <span class="text-[10px] text-[#8C7A6B] block">บัญชี</span>
+            </div>
+            <div class="bg-white p-2.5 rounded-xl border border-[#EADBC8] text-center">
+              <span class="text-[11px] text-[#8C7A6B] block">แอค 7 วัน</span>
+              <span class="text-lg font-bold text-[#7B4B27] font-mono" id="breakdownDay7">0</span>
+              <span class="text-[10px] text-[#8C7A6B] block">บัญชี</span>
+            </div>
+            <div class="bg-white p-2.5 rounded-xl border border-[#EADBC8] text-center">
+              <span class="text-[11px] text-[#8C7A6B] block">แอค 30 วัน</span>
+              <span class="text-lg font-bold text-[#7B4B27] font-mono" id="breakdownDay30">0</span>
+              <span class="text-[10px] text-[#8C7A6B] block">บัญชี</span>
+            </div>
+            <div class="bg-white p-2.5 rounded-xl border border-[#EADBC8] text-center">
+              <span class="text-[11px] text-[#8C7A6B] block">อื่นๆ / กำหนดเอง</span>
+              <span class="text-lg font-bold text-[#7B4B27] font-mono" id="breakdownDayOther">0</span>
+              <span class="text-[10px] text-[#8C7A6B] block">บัญชี</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- ACTION & FILTER BAR                                          -->
+      <!-- ============================================================ -->
+      <section class="bg-white border-2 border-[#EADBC8] rounded-2xl p-4 shadow-sm flex flex-col gap-3">
+        <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
+          <!-- Search Box -->
+          <div class="relative flex-1">
+            <i data-lucide="search" class="w-4 h-4 text-[#8C7A6B] absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+            <input type="text" id="accountSearchInput" placeholder="ค้นหาตามชื่อเมล, โน้ตลูกค้า, หรือแอป..."
+              class="w-full pl-10 pr-3 py-2 bg-[#FAF6F0] border-2 border-[#EADBC8] rounded-xl text-xs focus:outline-none focus:border-[#7B4B27] text-[#4A3525]">
+          </div>
+
+          <!-- Duration Filter Dropdown -->
+          <div class="flex items-center gap-1.5 text-xs">
+            <span class="text-[#8C7A6B] whitespace-nowrap">อายุ:</span>
+            <select id="durationFilterSelect" class="bg-[#FAF6F0] border-2 border-[#EADBC8] rounded-xl px-2.5 py-1.5 text-xs text-[#4A3525] focus:outline-none focus:border-[#7B4B27]">
+              <option value="all">ทุกระยะเวลา</option>
+              <option value="1_day">1 วัน</option>
+              <option value="7_days">7 วัน</option>
+              <option value="30_days">30 วัน</option>
+              <option value="other">อื่นๆ</option>
+            </select>
+          </div>
+
+          <!-- Create Button -->
+          <button type="button" id="btnOpenCreateModal" class="px-4 py-2 bg-[#7B4B27] hover:bg-[#583116] text-white rounded-xl text-xs font-bold shadow-sm transition-all flex items-center justify-center gap-1.5 whitespace-nowrap">
+            <i data-lucide="plus-circle" class="w-4 h-4"></i>
+            <span>สร้างเมลใหม่ @bunnieschi.com</span>
+          </button>
+        </div>
+
+        <!-- App Filter Chips Container (Scrollable) -->
+        <div class="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs" id="appFilterChipsList">
+          <!-- Dynamically populated chips -->
+          <button type="button" data-app="all" class="app-chip active px-3 py-1 rounded-lg border-2 border-[#7B4B27] bg-[#7B4B27] text-white font-bold whitespace-nowrap">
+            ทั้งหมด
+          </button>
+        </div>
+      </section>
+
+      <!-- ============================================================ -->
+      <!-- ACCOUNTS TABLE                                               -->
+      <!-- ============================================================ -->
+      <section class="bg-white border-2 border-[#EADBC8] rounded-3xl overflow-hidden shadow-sm">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-[#F8F3EC] text-[#583116] border-b-2 border-[#EADBC8] font-bold text-[11px]">
+              <tr>
+                <th class="py-3 px-4">อีเมล (@bunnieschi.com)</th>
+                <th class="py-3 px-4">รหัสผ่าน</th>
+                <th class="py-3 px-4">แอปพรีเมี่ยม (หลายแอป)</th>
+                <th class="py-3 px-4">อายุแอค</th>
+                <th class="py-3 px-4">ข้อมูลลูกค้า / โน้ต</th>
+                <th class="py-3 px-4">สถานะ</th>
+                <th class="py-3 px-4">OTP ล่าสุด</th>
+                <th class="py-3 px-4 text-right">ดำเนินการ</th>
+              </tr>
+            </thead>
+            <tbody id="accountsTableBody" class="divide-y divide-[#EADBC8]/70 text-[#4A3525]">
+              <!-- Dynamically Populated -->
+              <tr>
+                <td colspan="8" class="py-12 text-center text-[#8C7A6B]">
+                  <div class="flex flex-col items-center justify-center gap-2">
+                    <i data-lucide="inbox" class="w-8 h-8 text-[#8C7A6B]"></i>
+                    <span>ยังไม่มีบัญชีที่สร้างไว้ กดปุ่ม "สร้างเมลใหม่" เพื่อเริ่มต้น</span>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- ============================================================== -->
+    <!-- VIEW 2: UNIVERSAL OTP TAB (General Purpose)                    -->
+    <!-- ============================================================== -->
+    <div id="viewUniversal" class="hidden flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- Left Settings -->
+        <div class="lg:col-span-5 flex flex-col gap-4">
+          <div class="bg-white border-2 border-[#EADBC8] rounded-3xl p-5 shadow-sm space-y-4">
+            <div class="flex items-center justify-between border-b border-[#EADBC8] pb-3">
+              <div class="flex items-center gap-2 font-bold text-sm text-[#4A3525]">
+                <i data-lucide="mail-search" class="w-4 h-4 text-[#7B4B27]"></i>
+                <span>ดึง OTP จากอีเมลภายนอก</span>
+              </div>
+            </div>
+
+            <form id="emailForm" class="space-y-3 text-xs">
+              <div>
+                <label for="emailInput" class="block font-semibold text-[#583116] mb-1">ที่อยู่อีเมล</label>
+                <input type="email" id="emailInput" placeholder="user@gmail.com, user@hotmail.com หรืออื่นๆ" required
+                  class="w-full px-3 py-2 bg-[#FAF6F0] border-2 border-[#EADBC8] rounded-xl font-mono text-[#4A3525]">
+              </div>
+
+              <div>
+                <label for="passwordInput" class="block font-semibold text-[#583116] mb-1">รหัสผ่าน / App Password</label>
+                <input type="password" id="passwordInput" placeholder="รหัสผ่านอีเมล" required
+                  class="w-full px-3 py-2 bg-[#FAF6F0] border-2 border-[#EADBC8] rounded-xl font-mono text-[#4A3525]">
+              </div>
+
+              <div>
+                <label for="filterQuery" class="block font-semibold text-[#583116] mb-1">ค้นหาเฉพาะผู้ส่ง/บริการ (เว้นว่างได้)</label>
+                <input type="text" id="filterQuery" placeholder="เช่น Netflix, TikTok, Steam, Google"
+                  class="w-full px-3 py-2 bg-[#FAF6F0] border-2 border-[#EADBC8] rounded-xl text-[#4A3525]">
+              </div>
+
+              <button type="button" id="btnFetchLatest" class="w-full py-2.5 px-4 rounded-xl font-bold btn-cute-primary flex items-center justify-center gap-2">
+                <i data-lucide="refresh-cw" id="fetchIcon" class="w-4 h-4"></i>
+                <span id="fetchBtnText">ดึงข้อความล่าสุด</span>
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Right Output -->
+        <div class="lg:col-span-7 flex flex-col gap-4">
+          <div class="bg-white border-2 border-[#EADBC8] rounded-3xl p-6 shadow-sm space-y-4 text-center">
+            <span class="text-xs font-bold text-[#8C7A6B]">รหัสยืนยัน OTP</span>
+
+            <div class="p-8 bg-[#FAF6F0] border-2 border-[#EADBC8] rounded-2xl flex flex-col items-center justify-center">
+              <div id="otpPlaceholder" class="text-xs text-[#8C7A6B]">
+                กด "ดึงข้อความล่าสุด" เพื่อรับ OTP
+              </div>
+
+              <div id="otpFoundBox" class="hidden flex flex-col items-center w-full">
+                <span class="text-xs text-[#8C7A6B] mb-1">รหัส OTP:</span>
+                <div id="otpCode" class="text-5xl font-black font-['JetBrains_Mono'] text-[#7B4B27] select-all">
+                  ------
+                </div>
+                <button type="button" id="btnCopyOtp" class="mt-4 px-5 py-2 rounded-xl btn-cute-pink text-xs font-bold flex items-center gap-1.5">
+                  <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                  <span id="copyBtnText">คัดลอกรหัส OTP</span>
+                </button>
+              </div>
+            </div>
+
+            <div id="emailMetaSection" class="hidden text-left text-xs space-y-1.5 pt-3 border-t border-[#EADBC8]">
+              <div class="flex justify-between"><span class="text-[#8C7A6B]">หัวข้อ:</span><span id="emailSubject" class="font-semibold truncate"></span></div>
+              <div class="flex justify-between"><span class="text-[#8C7A6B]">ผู้ส่ง:</span><span id="emailFrom" class="font-mono truncate"></span></div>
+              <div class="flex justify-between"><span class="text-[#8C7A6B]">เวลา:</span><span id="emailDate" class="font-mono text-[#D88390]"></span></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- 3. MODALS                                                      -->
+  <!-- ============================================================== -->
+
+  <!-- Modal: สร้างบัญชีใหม่ (Create Account Modal) -->
+  <div id="modalCreateAccount" class="fixed inset-0 bg-[#4A3525]/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white border-2 border-[#EADBC8] rounded-3xl max-w-xl w-full p-6 sm:p-7 shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b-2 border-[#EADBC8] pb-3">
+        <div class="flex items-center gap-2">
+          <i data-lucide="plus-circle" class="w-5 h-5 text-[#7B4B27]"></i>
+          <h3 class="font-bold text-base text-[#4A3525]">สร้างเมลพรีเมี่ยม @bunnieschi.com</h3>
+        </div>
+        <button id="btnCloseCreateModal" class="text-[#8C7A6B] hover:text-[#4A3525]"><i data-lucide="x" class="w-4 h-4"></i></button>
+      </div>
+
+      <form id="createAccountForm" class="space-y-4 text-xs">
+        <!-- Email Prefix -->
+        <div>
+          <label class="block font-semibold text-[#583116] mb-1 flex items-center justify-between">
+            <span>ชื่ออีเมล</span>
+            <button type="button" id="btnRandomPrefix" class="text-[11px] text-[#D88390] hover:underline flex items-center gap-1 font-bold">
+              <i data-lucide="shuffle" class="w-3 h-3"></i>
+              <span>สุ่มชื่อด่วน</span>
+            </button>
+          </label>
+          <div class="flex items-center">
+            <input type="text" id="inputEmailPrefix" placeholder="เช่น netflix_th01" required
+              class="flex-1 px-3 py-2.5 bg-[#FAF6F0] border-2 border-[#EADBC8] rounded-l-2xl font-mono text-[#4A3525] focus:outline-none focus:border-[#7B4B27]">
+            <span class="px-3.5 py-2.5 bg-[#FFF9DB] border-2 border-l-0 border-[#EADBC8] rounded-r-2xl font-mono text-[#7B4B27] font-bold">
+              @bunnieschi.com
+            </span>
+          </div>
+        </div>
+
+        <!-- Password -->
+        <div>
+          <label class="block font-semibold text-[#583116] mb-1 flex items-center justify-between">
+            <span>รหัสผ่าน</span>
+            <button type="button" id="btnRandomPassword" class="text-[11px] text-[#7B4B27] hover:underline flex items-center gap-1 font-bold">
+              <i data-lucide="key" class="w-3 h-3"></i>
+              <span>สุ่มรหัสผ่านปลอดภัย</span>
+            </button>
+          </label>
+          <input type="text" id="inputAccountPassword" placeholder="กำหนดรหัสผ่านของบัญชี" required
+            class="w-full px-3 py-2.5 bg-[#FAF6F0] border-2 border-[#EADBC8] rounded-2xl font-mono text-[#4A3525] focus:outline-none focus:border-[#7B4B27]">
+        </div>
+
+        <!-- Duration Package (Requirement 2: 1 วัน, 7 วัน, 30 วัน, อื่นๆ) -->
+        <div>
+          <label class="block font-semibold text-[#583116] mb-1.5">
+            เลือกระยะเวลาการใช้งาน (อายุแอค)
+          </label>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2" id="durationOptionsContainer">
+            <div class="duration-card p-2.5 text-center selected" data-duration="1_day">
+              <span class="block font-bold text-xs text-[#7B4B27]">1 วัน</span>
+              <span class="text-[10px] text-[#8C7A6B]">แพ็กเกจรายวัน</span>
+            </div>
+            <div class="duration-card p-2.5 text-center" data-duration="7_days">
+              <span class="block font-bold text-xs text-[#7B4B27]">7 วัน</span>
+              <span class="text-[10px] text-[#8C7A6B]">แพ็กเกจ 1 สัปดาห์</span>
+            </div>
+            <div class="duration-card p-2.5 text-center" data-duration="30_days">
+              <span class="block font-bold text-xs text-[#7B4B27]">30 วัน</span>
+              <span class="text-[10px] text-[#8C7A6B]">แพ็กเกจ 1 เดือน</span>
+            </div>
+            <div class="duration-card p-2.5 text-center" data-duration="other">
+              <span class="block font-bold text-xs text-[#7B4B27]">อื่นๆ</span>
+              <span class="text-[10px] text-[#8C7A6B]">กำหนดเอง</span>
+            </div>
+          </div>
+          <div id="customDurationInputBox" class="hidden mt-2">
+            <input type="text" id="inputCustomDuration" placeholder="ระบุจำนวนวัน เช่น 14 วัน หรือ 3 เดือน"
+              class="w-full px-3 py-2 bg-[#FAF6F0] border-2 border-[#EADBC8] rounded-xl text-xs">
+          </div>
+        </div>
+
+        <!-- Premium Apps Selection (Requirement 3: Multi-select & Add custom apps) -->
+        <div>
+          <div class="flex items-center justify-between mb-1.5">
+            <label class="font-semibold text-[#583116]">
+              นำไปสมัครแอปพรีเมี่ยมตัวไหน (เลือกได้หลายแอป)
+            </label>
+            <button type="button" id="btnOpenAddCustomApp" class="text-[11px] font-bold text-[#D88390] hover:underline flex items-center gap-1">
+              <i data-lucide="plus" class="w-3 h-3"></i>
+              <span>เพิ่มแอปใหม่</span>
+            </button>
+          </div>
+
+          <!-- Multi-select App Badges Grid -->
+          <div class="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto p-1.5 border-2 border-[#EADBC8] rounded-2xl bg-[#FAF6F0]/60" id="multiAppSelectorList">
+            <!-- Dynamically populated checkbox badges -->
+          </div>
+          <p class="text-[10px] text-[#8C7A6B] mt-1">* คลิกเพื่อเลือก/ยกเลิก สามารถเลือกพร้อมกันได้หลายแอป</p>
+        </div>
+
+        <!-- Note / Customer -->
+        <div>
+          <label class="block font-semibold text-[#583116] mb-1">ข้อมูลลูกค้า / โน้ตกำกับ (ถ้ามี)</label>
+          <input type="text" id="inputAccountNote" placeholder="เช่น ลูกค้าคุณสมศรี, เริ่มใช้งาน 19 ต.ค."
+            class="w-full px-3 py-2 bg-[#FAF6F0] border-2 border-[#EADBC8] rounded-xl text-[#4A3525]">
+        </div>
+
+        <button type="submit" class="w-full py-3 px-4 rounded-2xl font-bold btn-cute-primary flex items-center justify-center gap-2">
+          <i data-lucide="check" class="w-4 h-4"></i>
+          <span>บันทึกบัญชีเมล</span>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: เพิ่มแอปใหม่ (Add Custom App Modal) -->
+  <div id="modalAddApp" class="fixed inset-0 bg-[#4A3525]/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white border-2 border-[#EADBC8] rounded-3xl max-w-sm w-full p-6 shadow-xl space-y-4 text-xs">
+      <div class="flex items-center justify-between border-b border-[#EADBC8] pb-2">
+        <h4 class="font-bold text-sm text-[#4A3525]">เพิ่มแอปพรีเมี่ยมใหม่</h4>
+        <button id="btnCloseAddApp" class="text-[#8C7A6B] hover:text-[#4A3525]"><i data-lucide="x" class="w-4 h-4"></i></button>
+      </div>
+
+      <form id="addAppForm" class="space-y-3">
+        <div>
+          <label class="block font-semibold text-[#583116] mb-1">ชื่อแอป</label>
+          <input type="text" id="inputNewAppName" placeholder="เช่น WeTV, HBO GO, Apple TV+" required
+            class="w-full px-3 py-2 bg-[#FAF6F0] border-2 border-[#EADBC8] rounded-xl text-[#4A3525]">
+        </div>
+        <button type="submit" class="w-full py-2.5 rounded-xl btn-cute-yellow font-bold text-xs">
+          บันทึกแอป
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: กล่องดึง OTP เฉพาะบัญชี (Targeted Account OTP Modal) -->
+  <div id="modalTargetedOtp" class="fixed inset-0 bg-[#4A3525]/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white border-2 border-[#EADBC8] rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 text-center">
+      <div class="flex items-center justify-between border-b-2 border-[#EADBC8] pb-3 text-left">
+        <div>
+          <h3 class="font-bold text-sm text-[#4A3525] flex items-center gap-2">
+            <span>ดึง OTP สำหรับ</span>
+            <span id="targetEmailTitle" class="font-mono text-[#7B4B27]">...</span>
+          </h3>
+          <p id="targetAppTag" class="text-[11px] text-[#8C7A6B]">แอป: ...</p>
+        </div>
+        <button id="btnCloseTargetedOtp" class="text-[#8C7A6B] hover:text-[#4A3525]"><i data-lucide="x" class="w-4 h-4"></i></button>
+      </div>
+
+      <!-- OTP Display -->
+      <div class="py-6 px-4 rounded-2xl bg-[#FAF6F0] border-2 border-[#EADBC8] flex flex-col items-center justify-center">
+        <div id="targetOtpLoading" class="flex flex-col items-center py-6 text-[#7B4B27] gap-2">
+          <i data-lucide="loader-2" class="w-7 h-7 animate-spin"></i>
+          <span class="text-xs font-semibold">กำลังเชื่อมต่อเพื่อดึง OTP ล่าสุด...</span>
+        </div>
+
+        <div id="targetOtpResult" class="hidden flex flex-col items-center w-full">
+          <span class="text-xs text-[#8C7A6B] mb-1">รหัส OTP ล่าสุด:</span>
+          <div id="targetOtpValue" class="text-5xl font-black font-['JetBrains_Mono'] text-[#7B4B27] tracking-wider select-all">
+            ------
+          </div>
+
+          <button type="button" id="btnCopyTargetOtp" class="mt-4 px-6 py-2 rounded-xl btn-cute-pink text-xs font-bold flex items-center gap-1.5">
+            <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+            <span id="targetCopyBtnText">คัดลอกรหัส OTP</span>
+          </button>
+        </div>
+
+        <div id="targetOtpEmpty" class="hidden flex flex-col items-center py-6 text-[#8C7A6B]">
+          <i data-lucide="mail-x" class="w-8 h-8 mb-2"></i>
+          <p class="text-xs font-semibold" id="targetEmptyMessage">ยังไม่มีจดหมายส่งถึงเมลนี้</p>
+          <p class="text-[11px] mt-1 text-[#8C7A6B]">กดส่งรหัสจากแอป แล้วกดปุ่ม "รีเฟรชอีกครั้ง" ด้านล่าง</p>
+        </div>
+      </div>
+
+      <!-- Email Details -->
+      <div id="targetEmailDetails" class="hidden space-y-1 p-3 bg-[#F8F3EC] rounded-xl border border-[#EADBC8] text-xs text-left">
+        <div class="flex justify-between"><span class="text-[#8C7A6B]">หัวข้อ:</span><span id="targetSubject" class="font-semibold truncate"></span></div>
+        <div class="flex justify-between"><span class="text-[#8C7A6B]">ผู้ส่ง:</span><span id="targetFrom" class="font-mono truncate"></span></div>
+        <div class="flex justify-between"><span class="text-[#8C7A6B]">เวลา:</span><span id="targetDate" class="font-mono text-[#D88390]"></span></div>
+      </div>
+
+      <div class="flex items-center justify-between pt-2">
+        <button type="button" id="btnRetryTargetOtp" class="px-4 py-2 bg-[#FAF6F0] hover:bg-[#F3ECE2] border-2 border-[#EADBC8] text-[#7B4B27] rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all">
+          <i data-lucide="rotate-cw" class="w-3.5 h-3.5"></i>
+          <span>รีเฟรชอีกครั้ง</span>
+        </button>
+
+        <label class="flex items-center gap-1.5 text-xs text-[#8C7A6B] cursor-pointer">
+          <input type="checkbox" id="chkTargetAutoRefresh" class="rounded border-[#EADBC8] text-[#7B4B27]">
+          <span>รีเฟรชอัตโนมัติทุก 5 วินาที</span>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: ลิงก์สมัครสมาชิกแยก (Membership Modal Placeholder - Requirement 4) -->
+  <div id="modalRegister" class="fixed inset-0 bg-[#4A3525]/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white border-2 border-[#EADBC8] rounded-3xl max-w-md w-full p-6 shadow-xl space-y-4 text-center">
+      <div class="flex items-center justify-between border-b border-[#EADBC8] pb-2">
+        <h3 class="font-bold text-sm text-[#4A3525]">ระบบสมัครสมาชิก (Membership Portal)</h3>
+        <button id="btnCloseRegisterModal" class="text-[#8C7A6B] hover:text-[#4A3525]"><i data-lucide="x" class="w-4 h-4"></i></button>
+      </div>
+
+      <div class="p-6 bg-[#FAF6F0] rounded-2xl border-2 border-[#EADBC8] space-y-2">
+        <i data-lucide="sparkles" class="w-8 h-8 text-[#7B4B27] mx-auto"></i>
+        <h4 class="font-bold text-sm text-[#7B4B27]">ลิงก์สมัครสมาชิกแยกสำหรับลูกค้า</h4>
+        <p class="text-xs text-[#8C7A6B] leading-relaxed">
+          ส่วนนี้ถูกแยกออกมาเพื่อรองรับระบบสมัครสมาชิกและแพ็กเกจลูกค้าในอนาคต ตามที่แจ้งไว้ว่า "อันนี้ค่อยทำ"
+        </p>
+      </div>
+
+      <button type="button" id="btnDismissRegister" class="w-full py-2.5 rounded-xl btn-cute-primary font-bold text-xs">
+        เข้าใจแล้ว ปิดหน้าต่าง
+      </button>
+    </div>
+  </div>
+
+  <!-- Modal: ตั้งค่าเซิร์ฟเวอร์โดเมน (Domain Settings Modal) -->
+  <div id="modalDomainSettings" class="fixed inset-0 bg-[#4A3525]/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white border-2 border-[#EADBC8] rounded-3xl max-w-lg w-full p-6 shadow-xl space-y-4 text-xs">
+      <div class="flex items-center justify-between border-b border-[#EADBC8] pb-2">
+        <h3 class="font-bold text-sm text-[#4A3525]">ตั้งค่าโฮสต์เมล @bunnieschi.com</h3>
+        <button id="btnCloseDomainSettings" class="text-[#8C7A6B] hover:text-[#4A3525]"><i data-lucide="x" class="w-4 h-4"></i></button>
+      </div>
+
+      <form id="domainSettingsForm" class="space-y-3">
+        <div class="grid grid-cols-3 gap-2">
+          <div class="col-span-2">
+            <label class="block font-semibold text-[#583116] mb-1">IMAP Host</label>
+            <input type="text" id="setImapHost" value="mail.bunnieschi.com" required
+              class="w-full px-3 py-2 bg-[#FAF6F0] border-2 border-[#EADBC8] rounded-xl font-mono text-[#4A3525]">
+          </div>
+          <div>
+            <label class="block font-semibold text-[#583116] mb-1">Port</label>
+            <input type="number" id="setImapPort" value="993" required
+              class="w-full px-3 py-2 bg-[#FAF6F0] border-2 border-[#EADBC8] rounded-xl font-mono text-[#4A3525]">
+          </div>
+        </div>
+
+        <div class="p-3 bg-[#FFF9DB] border-2 border-[#F9D776] rounded-2xl space-y-2">
+          <label class="flex items-center gap-2 cursor-pointer font-bold text-[#7B4B27]">
+            <input type="checkbox" id="setUseCatchAll" checked class="rounded border-[#EADBC8] text-[#7B4B27]">
+            <span>เปิดใช้ระบบกล่องรวม Catch-All (แนะนำ)</span>
+          </label>
+          <div id="catchAllInputs" class="space-y-2 pt-1 border-t border-[#EADBC8]">
+            <div>
+              <label class="block font-semibold text-[#583116] mb-0.5">อีเมลโฮสต์กลาง (Catch-All Email)</label>
+              <input type="email" id="setCatchAllEmail" value="mikibun@bunnieschi.com"
+                class="w-full px-3 py-2 bg-white border-2 border-[#EADBC8] rounded-xl font-mono text-[#4A3525]">
+            </div>
+            <div>
+              <label class="block font-semibold text-[#583116] mb-0.5">รหัสผ่านของโฮสต์กลาง</label>
+              <input type="password" id="setCatchAllPassword" placeholder="รหัสผ่านอีเมล mikibun@bunnieschi.com"
+                class="w-full px-3 py-2 bg-white border-2 border-[#EADBC8] rounded-xl font-mono text-[#4A3525]">
+            </div>
+          </div>
+        </div>
+
+        <button type="submit" class="w-full py-2.5 rounded-xl btn-cute-primary font-bold">
+          บันทึกการตั้งค่า
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: เปลี่ยนรหัสผ่านแอดมิน -->
+  <div id="modalChangePass" class="fixed inset-0 bg-[#4A3525]/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white border-2 border-[#EADBC8] rounded-3xl max-w-sm w-full p-6 shadow-xl space-y-4 text-xs">
+      <div class="flex items-center justify-between border-b border-[#EADBC8] pb-2">
+        <h3 class="font-bold text-sm text-[#4A3525]">เปลี่ยนรหัสผ่านเข้าเว็บ</h3>
+        <button id="btnCloseChangePass" class="text-[#8C7A6B] hover:text-[#4A3525]"><i data-lucide="x" class="w-4 h-4"></i></button>
+      </div>
+
+      <form id="changePassForm" class="space-y-3">
+        <div>
+          <label class="block font-semibold text-[#583116] mb-1">รหัสผ่านปัจจุบัน</label>
+          <input type="password" id="chgCurrentPass" required class="w-full px-3 py-2 bg-[#FAF6F0] border-2 border-[#EADBC8] rounded-xl">
+        </div>
+        <div>
+          <label class="block font-semibold text-[#583116] mb-1">ชื่อผู้ใช้ใหม่ (เว้นว่างเพื่อใช้เดิม)</label>
+          <input type="text" id="chgNewUser" class="w-full px-3 py-2 bg-[#FAF6F0] border-2 border-[#EADBC8] rounded-xl">
+        </div>
+        <div>
+          <label class="block font-semibold text-[#583116] mb-1">รหัสผ่านใหม่</label>
+          <input type="password" id="chgNewPass" required class="w-full px-3 py-2 bg-[#FAF6F0] border-2 border-[#EADBC8] rounded-xl">
+        </div>
+        <button type="submit" class="w-full py-2.5 rounded-xl btn-cute-primary font-bold">
+          ยืนยันการเปลี่ยน
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
