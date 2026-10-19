@@ -3,13 +3,12 @@ const path = require('path');
 const crypto = require('crypto');
 const { createClient } = require('@supabase/supabase-js');
 
-let rawSupabaseUrl = (process.env.SUPABASE_URL || '').trim();
-let rawSupabaseKey = (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY || process.env.SUPABASE_ANON_KEY || '').trim().replace(/\s+/g, '');
+let rawSupabaseUrl = (process.env.SUPABASE_URL || '').trim().replace(/['"]+/g, '');
+let rawSupabaseKey = (process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY || process.env.SUPABASE_ANON_KEY || '').trim().replace(/['"]+/g, '').replace(/\s+/g, '');
 
-// Auto-correct common user typo: .supabase.com -> .supabase.co
-if (rawSupabaseUrl.endsWith('.supabase.com')) {
-  rawSupabaseUrl = rawSupabaseUrl.replace(/\.supabase\.com$/, '.supabase.co');
-}
+// Auto-correct common user typos
+rawSupabaseUrl = rawSupabaseUrl.replace(/\.supabase\.com/g, '.supabase.co');
+rawSupabaseUrl = rawSupabaseUrl.replace(/jrpbayeumop/g, 'jrpbaueumop');
 rawSupabaseUrl = rawSupabaseUrl.replace(/\/+$/, '');
 
 function isValidSupabaseUrl(url) {
@@ -668,7 +667,7 @@ async function addAppPreset(shopId, name) {
 function getDbStatus() {
   return {
     isSupabaseEnabled,
-    rawSupabaseUrl: rawSupabaseUrl ? `${rawSupabaseUrl.slice(0, 15)}...` : '(empty)',
+    rawSupabaseUrl: rawSupabaseUrl || '(empty)',
     storageMode: isSupabaseEnabled ? 'supabase_auth_and_postgres' : 'local_json_mode'
   };
 }
