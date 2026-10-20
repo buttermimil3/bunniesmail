@@ -783,6 +783,29 @@
         <div class="flex justify-between"><span class="text-[#8C7A6B]">เวลา:</span><span id="targetDate" class="font-mono text-[#D88390]"></span></div>
       </div>
 
+      <!-- ส่วนแสดงลิงก์ยืนยันในอีเมล (เช่น Netflix ครัวเรือน / ยืนยันอุปกรณ์) -->
+      <div id="targetLinksSection" class="hidden space-y-2 p-3 bg-[#FFF9DB] border-2 border-[#F9D776] rounded-2xl text-left">
+        <div class="flex items-center gap-1.5 font-bold text-xs text-[#7B4B27]">
+          <i data-lucide="external-link" class="w-4 h-4 text-[#D88390]"></i>
+          <span>ลิงก์ยืนยันที่ตรวจพบในอีเมล (เช่น ยืนยันครัวเรือน Netflix):</span>
+        </div>
+        <div id="targetLinksList" class="flex flex-col gap-2 pt-1"></div>
+      </div>
+
+      <!-- ปุ่มและส่วนแสดงเนื้อหาอีเมลฉบับเต็ม -->
+      <div id="targetFullEmailContainer" class="hidden text-left">
+        <button type="button" id="btnToggleFullEmail" class="w-full py-2 px-3 bg-[#F8F3EC] hover:bg-[#EADBC8]/60 border border-[#EADBC8] rounded-xl text-xs font-semibold text-[#7B4B27] flex items-center justify-between transition-colors">
+          <span class="flex items-center gap-1.5">
+            <i data-lucide="mail-open" class="w-3.5 h-3.5 text-[#D88390]"></i>
+            <span>ดูเนื้อหาอีเมลฉบับเต็ม / เปิดลิงก์ทั้งหมด</span>
+          </span>
+          <i data-lucide="chevron-down" id="iconFullEmailChevron" class="w-3.5 h-3.5 transition-transform duration-200"></i>
+        </button>
+        <div id="targetFullEmailBox" class="hidden mt-2 p-3 bg-white border border-[#EADBC8] rounded-xl max-h-60 overflow-y-auto text-xs text-[#4A3525]">
+          <div id="targetFullEmailContent"></div>
+        </div>
+      </div>
+
       <div class="flex items-center justify-between pt-2">
         <button type="button" id="btnRetryTargetOtp" class="px-4 py-2 bg-[#FAF6F0] hover:bg-[#F3ECE2] border-2 border-[#EADBC8] text-[#7B4B27] rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all">
           <i data-lucide="rotate-cw" class="w-3.5 h-3.5"></i>
@@ -1101,6 +1124,22 @@ function setupEventListeners() {
     if (e.target.checked) startTargetAutoRefresh();
     else stopTargetAutoRefresh();
   });
+
+  const btnToggleFullEmail = document.getElementById('btnToggleFullEmail');
+  const targetFullEmailBox = document.getElementById('targetFullEmailBox');
+  const iconFullEmailChevron = document.getElementById('iconFullEmailChevron');
+  if (btnToggleFullEmail && targetFullEmailBox) {
+    btnToggleFullEmail.addEventListener('click', () => {
+      const isHidden = targetFullEmailBox.classList.contains('hidden');
+      if (isHidden) {
+        targetFullEmailBox.classList.remove('hidden');
+        if (iconFullEmailChevron) iconFullEmailChevron.style.transform = 'rotate(180deg)';
+      } else {
+        targetFullEmailBox.classList.add('hidden');
+        if (iconFullEmailChevron) iconFullEmailChevron.style.transform = 'rotate(0deg)';
+      }
+    });
+  }
 
   // Domain Settings
   btnOpenDomainSettings.addEventListener('click', openDomainSettingsModal);
@@ -1839,6 +1878,12 @@ async function fetchTargetedOtp(accountId) {
   targetOtpResult.classList.add('hidden');
   targetOtpEmpty.classList.add('hidden');
   targetEmailDetails.classList.add('hidden');
+  const linksSection = document.getElementById('targetLinksSection');
+  if (linksSection) linksSection.classList.add('hidden');
+  const fullEmailContainer = document.getElementById('targetFullEmailContainer');
+  if (fullEmailContainer) fullEmailContainer.classList.add('hidden');
+  const fullEmailBox = document.getElementById('targetFullEmailBox');
+  if (fullEmailBox) fullEmailBox.classList.add('hidden');
 
   try {
     const res = await fetch(`/api/accounts/${accountId}/fetch-otp`, {
@@ -1862,10 +1907,17 @@ async function fetchTargetedOtp(accountId) {
     const emailData = data.data;
     if (emailData.otp) {
       targetOtpValue.textContent = emailData.otp;
+      targetOtpValue.className = "text-5xl font-black font-['JetBrains_Mono'] text-[#7B4B27] tracking-wider select-all";
       btnCopyTargetOtp.classList.remove('hidden');
       targetCopyBtnText.textContent = `คัดลอกรหัส ${emailData.otp}`;
     } else {
-      targetOtpValue.textContent = 'ไม่พบรหัส OTP';
+      if (emailData.links && emailData.links.length > 0) {
+        targetOtpValue.textContent = 'พบลิงก์ยืนยันในอีเมล';
+        targetOtpValue.className = "text-xl font-bold font-['Mali'] text-[#D88390] select-all";
+      } else {
+        targetOtpValue.textContent = 'ไม่พบรหัส OTP';
+        targetOtpValue.className = "text-2xl font-bold font-['Mali'] text-[#8C7A6B] select-all";
+      }
       btnCopyTargetOtp.classList.add('hidden');
     }
 
@@ -1876,6 +1928,59 @@ async function fetchTargetedOtp(accountId) {
     targetOtpResult.classList.remove('hidden');
     targetEmailDetails.classList.remove('hidden');
 
+    // Render Confirmation Links (เช่น Netflix ครัวเรือน)
+    const linksList = document.getElementById('targetLinksList');
+    if (linksSection && linksList) {
+      linksList.innerHTML = '';
+      if (Array.isArray(emailData.links) && emailData.links.length > 0) {
+        linksSection.classList.remove('hidden');
+        emailData.links.forEach((lk) => {
+          const row = document.createElement('div');
+          row.className = 'flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 p-2.5 bg-white rounded-xl border border-[#EADBC8] shadow-xs';
+          row.innerHTML = `
+            <div class="flex-1 min-w-0 pr-1">
+              <span class="block font-bold text-xs text-[#7B4B27] truncate">${escapeHtml(lk.label)}</span>
+              <span class="block text-[10px] text-[#8C7A6B] font-mono truncate">${escapeHtml(lk.url)}</span>
+            </div>
+            <div class="flex items-center gap-1.5 shrink-0">
+              <a href="${escapeHtml(lk.url)}" target="_blank" rel="noopener noreferrer"
+                class="px-3 py-1.5 bg-[#D88390] hover:bg-[#c66f7c] text-white rounded-xl text-xs font-bold flex items-center gap-1 shadow-xs transition-colors">
+                <span>เปิดลิงก์ทันที</span>
+                <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+              </a>
+              <button type="button" class="btn-copy-link px-2.5 py-1.5 bg-[#FAF6F0] hover:bg-[#F3ECE2] border border-[#EADBC8] text-[#7B4B27] rounded-xl text-xs font-semibold" data-url="${escapeHtml(lk.url)}">
+                คัดลอก
+              </button>
+            </div>
+          `;
+          linksList.appendChild(row);
+        });
+
+        linksList.querySelectorAll('.btn-copy-link').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const urlToCopy = e.currentTarget.getAttribute('data-url');
+            navigator.clipboard.writeText(urlToCopy);
+            showToast('คัดลอกลิงก์เรียบร้อย', 'success');
+          });
+        });
+      } else {
+        linksSection.classList.add('hidden');
+      }
+    }
+
+    // Render Full Email Preview
+    const fullEmailContent = document.getElementById('targetFullEmailContent');
+    if (fullEmailContainer && fullEmailContent) {
+      if (emailData.bodyHtml || emailData.bodyText) {
+        fullEmailContainer.classList.remove('hidden');
+        fullEmailContent.innerHTML = emailData.bodyHtml || `<pre style="white-space: pre-wrap;">${escapeHtml(emailData.bodyText)}</pre>`;
+      } else {
+        fullEmailContainer.classList.add('hidden');
+      }
+    }
+
+    if (window.lucide) lucide.createIcons();
+
     if (emailData.otp) {
       const idx = currentAccounts.findIndex(a => a.id === accountId);
       if (idx !== -1) {
@@ -1884,7 +1989,7 @@ async function fetchTargetedOtp(accountId) {
       }
     }
 
-    showToast('ดึงจดหมายและ OTP สำเร็จ', 'success');
+    showToast('ดึงข้อมูลจดหมายสำเร็จ', 'success');
   } catch (err) {
     targetOtpLoading.classList.add('hidden');
     targetOtpEmpty.classList.remove('hidden');

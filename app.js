@@ -961,6 +961,12 @@ async function fetchTargetedOtp(accountId) {
   targetOtpResult.classList.add('hidden');
   targetOtpEmpty.classList.add('hidden');
   targetEmailDetails.classList.add('hidden');
+  const linksSection = document.getElementById('targetLinksSection');
+  if (linksSection) linksSection.classList.add('hidden');
+  const fullEmailContainer = document.getElementById('targetFullEmailContainer');
+  if (fullEmailContainer) fullEmailContainer.classList.add('hidden');
+  const fullEmailBox = document.getElementById('targetFullEmailBox');
+  if (fullEmailBox) fullEmailBox.classList.add('hidden');
 
   try {
     const res = await fetch(`/api/accounts/${accountId}/fetch-otp`, {
@@ -984,10 +990,17 @@ async function fetchTargetedOtp(accountId) {
     const emailData = data.data;
     if (emailData.otp) {
       targetOtpValue.textContent = emailData.otp;
+      targetOtpValue.className = "text-5xl font-black font-['JetBrains_Mono'] text-[#7B4B27] tracking-wider select-all";
       btnCopyTargetOtp.classList.remove('hidden');
       targetCopyBtnText.textContent = `คัดลอกรหัส ${emailData.otp}`;
     } else {
-      targetOtpValue.textContent = 'ไม่พบรหัส OTP';
+      if (emailData.links && emailData.links.length > 0) {
+        targetOtpValue.textContent = 'พบลิงก์ยืนยันในอีเมล';
+        targetOtpValue.className = "text-xl font-bold font-['Mali'] text-[#D88390] select-all";
+      } else {
+        targetOtpValue.textContent = 'ไม่พบรหัส OTP';
+        targetOtpValue.className = "text-2xl font-bold font-['Mali'] text-[#8C7A6B] select-all";
+      }
       btnCopyTargetOtp.classList.add('hidden');
     }
 
@@ -998,6 +1011,59 @@ async function fetchTargetedOtp(accountId) {
     targetOtpResult.classList.remove('hidden');
     targetEmailDetails.classList.remove('hidden');
 
+    // Render Confirmation Links (เช่น Netflix ครัวเรือน)
+    const linksList = document.getElementById('targetLinksList');
+    if (linksSection && linksList) {
+      linksList.innerHTML = '';
+      if (Array.isArray(emailData.links) && emailData.links.length > 0) {
+        linksSection.classList.remove('hidden');
+        emailData.links.forEach((lk) => {
+          const row = document.createElement('div');
+          row.className = 'flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 p-2.5 bg-white rounded-xl border border-[#EADBC8] shadow-xs';
+          row.innerHTML = `
+            <div class="flex-1 min-w-0 pr-1">
+              <span class="block font-bold text-xs text-[#7B4B27] truncate">${escapeHtml(lk.label)}</span>
+              <span class="block text-[10px] text-[#8C7A6B] font-mono truncate">${escapeHtml(lk.url)}</span>
+            </div>
+            <div class="flex items-center gap-1.5 shrink-0">
+              <a href="${escapeHtml(lk.url)}" target="_blank" rel="noopener noreferrer"
+                class="px-3 py-1.5 bg-[#D88390] hover:bg-[#c66f7c] text-white rounded-xl text-xs font-bold flex items-center gap-1 shadow-xs transition-colors">
+                <span>เปิดลิงก์ทันที</span>
+                <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
+              </a>
+              <button type="button" class="btn-copy-link px-2.5 py-1.5 bg-[#FAF6F0] hover:bg-[#F3ECE2] border border-[#EADBC8] text-[#7B4B27] rounded-xl text-xs font-semibold" data-url="${escapeHtml(lk.url)}">
+                คัดลอก
+              </button>
+            </div>
+          `;
+          linksList.appendChild(row);
+        });
+
+        linksList.querySelectorAll('.btn-copy-link').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const urlToCopy = e.currentTarget.getAttribute('data-url');
+            navigator.clipboard.writeText(urlToCopy);
+            showToast('คัดลอกลิงก์เรียบร้อย', 'success');
+          });
+        });
+      } else {
+        linksSection.classList.add('hidden');
+      }
+    }
+
+    // Render Full Email Preview
+    const fullEmailContent = document.getElementById('targetFullEmailContent');
+    if (fullEmailContainer && fullEmailContent) {
+      if (emailData.bodyHtml || emailData.bodyText) {
+        fullEmailContainer.classList.remove('hidden');
+        fullEmailContent.innerHTML = emailData.bodyHtml || `<pre style="white-space: pre-wrap;">${escapeHtml(emailData.bodyText)}</pre>`;
+      } else {
+        fullEmailContainer.classList.add('hidden');
+      }
+    }
+
+    if (window.lucide) lucide.createIcons();
+
     if (emailData.otp) {
       const idx = currentAccounts.findIndex(a => a.id === accountId);
       if (idx !== -1) {
@@ -1006,7 +1072,7 @@ async function fetchTargetedOtp(accountId) {
       }
     }
 
-    showToast('ดึงจดหมายและ OTP สำเร็จ', 'success');
+    showToast('ดึงข้อมูลจดหมายสำเร็จ', 'success');
   } catch (err) {
     targetOtpLoading.classList.add('hidden');
     targetOtpEmpty.classList.remove('hidden');

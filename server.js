@@ -1,14 +1,14 @@
+const dotenv = require('dotenv');
+dotenv.config();
+
 const express = require('express');
 const cors = require('cors');
-const dotenv = require('dotenv');
 const { ImapFlow } = require('imapflow');
 const { simpleParser } = require('mailparser');
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
 const db = require('./db');
-
-dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -125,6 +125,19 @@ app.get(['/api/health', '/health', '/api/db-check'], async (req, res) => {
     supabaseLive,
     time: new Date().toISOString()
   });
+});
+
+// Database Sync / Migrate Endpoint (Local JSON -> Supabase)
+app.all(['/api/db-sync', '/api/admin/sync-supabase'], async (req, res) => {
+  try {
+    const result = await db.syncLocalToSupabase();
+    if (!result.success) {
+      return res.status(400).json(result);
+    }
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
 });
 
 // ====================================================================
@@ -560,6 +573,7 @@ app.post(['/api/webhook/email', '/webhook/email'], async (req, res) => {
 
     const { primaryOtp, allCandidates } = extractOtp(emailSubject, emailText);
     const otpCode = primaryOtp || (allCandidates && allCandidates[0]) || '';
+    const emailLinks = extractLinks(emailText, emailHtml);
 
     // Look up account matching recipient address
     let account = await db.findAccountByEmail(emailTo);
@@ -584,19 +598,20 @@ app.post(['/api/webhook/email', '/webhook/email'], async (req, res) => {
         lastOtp: {
           code: otpCode,
           allOtps: allCandidates,
+          links: emailLinks,
           subject: emailSubject || '(ไม่มีหัวข้อ)',
           from: emailFrom || 'Cloudflare Inbound',
           to: emailTo,
           date: new Date().toISOString(),
-          bodyText: emailText.slice(0, 500),
+          bodyText: emailText.slice(0, 3000),
           bodyHtml: emailHtml || `<pre style="white-space: pre-wrap;">${escapeHtml(emailText)}</pre>`
         }
       });
-      console.log(`[Webhook] Stored OTP "${otpCode}" for account ${account.email}`);
-      return res.json({ success: true, matchedAccount: account.email, otp: otpCode });
+      console.log(`[Webhook] Stored email for ${account.email}: OTP="${otpCode}", Links=${emailLinks.length}`);
+      return res.json({ success: true, matchedAccount: account.email, otp: otpCode, links: emailLinks });
     } else {
       console.log(`[Webhook] No registered account matched email: ${emailTo}`);
-      return res.json({ success: true, warning: 'Account not found in registered list', to: emailTo, otp: otpCode });
+      return res.json({ success: true, warning: 'Account not found in registered list', to: emailTo, otp: otpCode, links: emailLinks });
     }
   } catch (err) {
     console.error('[Webhook] Process error:', err);
@@ -617,8 +632,8 @@ app.post('/api/accounts/:id/fetch-otp', requireAuth, async (req, res) => {
     return res.status(404).json({ success: false, error: 'ไม่พบบัญชีที่ระบุในร้านของคุณ' });
   }
 
-  // 1. If an OTP was received via Cloudflare Webhook, return it immediately
-  if (account.lastOtp && account.lastOtp.code) {
+  // 1. If an email or OTP was received via Cloudflare Webhook, return it immediately
+  if (account.lastOtp && (account.lastOtp.code || (account.lastOtp.links && account.lastOtp.links.length > 0) || account.lastOtp.subject)) {
     return res.json({
       success: true,
       hasEmail: true,
@@ -626,15 +641,16 @@ app.post('/api/accounts/:id/fetch-otp', requireAuth, async (req, res) => {
       accountApps: account.apps || [account.app || 'Other'],
       accountDuration: account.duration || '30_days',
       data: {
-        subject: account.lastOtp.subject || '(ได้รับรหัสจาก Cloudflare)',
+        subject: account.lastOtp.subject || '(ได้รับอีเมลจาก Cloudflare)',
         from: account.lastOtp.from || 'Cloudflare Inbound',
         to: account.email,
         date: account.lastOtp.date || new Date(),
-        otp: account.lastOtp.code,
-        allOtps: account.lastOtp.allOtps || [account.lastOtp.code],
-        snippet: account.lastOtp.bodyText ? account.lastOtp.bodyText.slice(0, 300) : `OTP: ${account.lastOtp.code}`,
+        otp: account.lastOtp.code || '',
+        allOtps: account.lastOtp.allOtps || (account.lastOtp.code ? [account.lastOtp.code] : []),
+        links: account.lastOtp.links || [],
+        snippet: account.lastOtp.bodyText ? account.lastOtp.bodyText.slice(0, 300) : (account.lastOtp.code ? `OTP: ${account.lastOtp.code}` : ''),
         bodyText: account.lastOtp.bodyText || '',
-        bodyHtml: account.lastOtp.bodyHtml || `<div>OTP: <strong>${account.lastOtp.code}</strong></div>`
+        bodyHtml: account.lastOtp.bodyHtml || (account.lastOtp.code ? `<div>OTP: <strong>${account.lastOtp.code}</strong></div>` : '')
       }
     });
   }
@@ -813,8 +829,8 @@ app.post('/api/accounts/:id/fetch-otp', requireAuth, async (req, res) => {
       errorMessage = `ไม่สามารถเชื่อมต่อ Mail Server (${host}:${port})`;
     }
 
-    // If account has an OTP received from Cloudflare Webhook, return it
-    if (account.lastOtp && account.lastOtp.code) {
+    // If account has an email/OTP received from Cloudflare Webhook, return it
+    if (account.lastOtp && (account.lastOtp.code || (account.lastOtp.links && account.lastOtp.links.length > 0) || account.lastOtp.subject)) {
       return res.json({
         success: true,
         hasEmail: true,
@@ -822,15 +838,16 @@ app.post('/api/accounts/:id/fetch-otp', requireAuth, async (req, res) => {
         accountApps: account.apps || [account.app || 'Other'],
         accountDuration: account.duration || '30_days',
         data: {
-          subject: account.lastOtp.subject || '(ได้รับรหัสจาก Cloudflare)',
+          subject: account.lastOtp.subject || '(ได้รับอีเมลจาก Cloudflare)',
           from: account.lastOtp.from || 'Cloudflare Inbound',
           to: account.email,
           date: account.lastOtp.date || new Date(),
-          otp: account.lastOtp.code,
-          allOtps: account.lastOtp.allOtps || [account.lastOtp.code],
-          snippet: account.lastOtp.bodyText ? account.lastOtp.bodyText.slice(0, 300) : `OTP: ${account.lastOtp.code}`,
+          otp: account.lastOtp.code || '',
+          allOtps: account.lastOtp.allOtps || (account.lastOtp.code ? [account.lastOtp.code] : []),
+          links: account.lastOtp.links || [],
+          snippet: account.lastOtp.bodyText ? account.lastOtp.bodyText.slice(0, 300) : (account.lastOtp.code ? `OTP: ${account.lastOtp.code}` : ''),
           bodyText: account.lastOtp.bodyText || '',
-          bodyHtml: account.lastOtp.bodyHtml || `<div>OTP: <strong>${account.lastOtp.code}</strong></div>`
+          bodyHtml: account.lastOtp.bodyHtml || (account.lastOtp.code ? `<div>OTP: <strong>${account.lastOtp.code}</strong></div>` : '')
         }
       });
     }
@@ -930,6 +947,63 @@ function isValidOtpCode(str) {
   return true;
 }
 
+function extractLinks(text, html) {
+  const links = [];
+  const seen = new Set();
+
+  function addLink(url, label) {
+    if (!url || typeof url !== 'string') return;
+    const cleanUrl = url.trim().replace(/[>)"']+$/, '');
+    if (!cleanUrl.startsWith('http://') && !cleanUrl.startsWith('https://')) return;
+    if (seen.has(cleanUrl)) return;
+
+    const lower = cleanUrl.toLowerCase();
+    // Exclude common noise / tracking links
+    if (lower.includes('unsubscribe') || lower.includes('opt-out') || lower.includes('help.netflix.com') ||
+        lower.includes('privacy') || lower.includes('terms') || lower.includes('support.google')) {
+      return;
+    }
+    seen.add(cleanUrl);
+
+    let cleanLabel = (label || '').replace(/<[^>]*>/g, '').trim();
+    if (!cleanLabel || cleanLabel.length > 60 || cleanLabel.startsWith('http')) {
+      if (lower.includes('netflix') && (lower.includes('travel') || lower.includes('verify') || lower.includes('household') || lower.includes('update'))) {
+        cleanLabel = 'ยืนยันครัวเรือน Netflix';
+      } else if (lower.includes('netflix')) {
+        cleanLabel = 'เปิดลิงก์ Netflix';
+      } else if (lower.includes('spotify')) {
+        cleanLabel = 'ยืนยันอีเมล Spotify';
+      } else if (lower.includes('canva')) {
+        cleanLabel = 'ยืนยันเข้าสู่ระบบ Canva';
+      } else if (lower.includes('youtube') || lower.includes('google')) {
+        cleanLabel = 'ยืนยันบัญชี Google / YouTube';
+      } else {
+        cleanLabel = 'คลิกลิงก์ยืนยันในอีเมล';
+      }
+    }
+
+    links.push({ url: cleanUrl, label: cleanLabel });
+  }
+
+  if (html) {
+    const anchorRegex = /<a\s+(?:[^>]*?\s+)?href=["']([^"']+)["'][^>]*>(.*?)<\/a>/gi;
+    let m;
+    while ((m = anchorRegex.exec(html)) !== null) {
+      addLink(m[1], m[2]);
+    }
+  }
+
+  if (text) {
+    const urlRegex = /(https?:\/\/[^\s<>"']+)/gi;
+    let m;
+    while ((m = urlRegex.exec(text)) !== null) {
+      addLink(m[1], '');
+    }
+  }
+
+  return links.slice(0, 5);
+}
+
 function resolveImapSettings(email, customHost, customPort, customSecure) {
   if (customHost && customHost.trim() !== '') {
     return {
@@ -941,6 +1015,7 @@ function resolveImapSettings(email, customHost, customPort, customSecure) {
 
   const parts = email.split('@');
   if (parts.length === 2) {
+    const domain = parts[1].toLowerCase();
     if (domain.includes('bunnieschi')) {
       return { host: 'imap.secureserver.net', port: 993, secure: true };
     }

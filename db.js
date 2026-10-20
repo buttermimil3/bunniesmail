@@ -1,3 +1,4 @@
+try { require('dotenv').config(); } catch (e) {}
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
@@ -238,8 +239,8 @@ async function registerShopUser({ shopName, email, password, passwordHash, avata
     }
   }
 
-  // Consistent ID: Use Supabase Auth UID if created, otherwise generate unique ID
-  const shopId = authUserId || ('shop_' + Date.now().toString(36) + '_' + Math.random().toString(36).substr(2, 5));
+  // Consistent ID: Use Supabase Auth UID if created, otherwise generate unique UUID
+  const shopId = authUserId || crypto.randomUUID();
 
   // 2. Insert into public.shops table in Supabase
   if (isSupabaseEnabled && supabase) {
@@ -779,6 +780,152 @@ async function checkSupabaseLive() {
   }
 }
 
+async function syncLocalToSupabase() {
+  if (!isSupabaseEnabled || !supabase) {
+    return {
+      success: false,
+      error: 'Supabase ยังไม่ได้เปิดใช้งาน หรือไม่ได้ตั้งค่า SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY'
+    };
+  }
+
+  const check = await checkSupabaseLive();
+  if (!check.tablesReady) {
+    return {
+      success: false,
+      error: check.message
+    };
+  }
+
+  const isUuid = id => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id || '');
+
+  // Query existing shops in Supabase
+  const { data: dbShops, error: dbShopsErr } = await supabase.from('shops').select('*');
+  const existingShopsByEmail = {};
+  if (!dbShopsErr && dbShops) {
+    dbShops.forEach(s => {
+      if (s.email) existingShopsByEmail[s.email.toLowerCase()] = s.id;
+    });
+  }
+
+  const shops = readJson(SHOPS_FILE, []);
+  const shopIdMap = {};
+  let shopsCount = 0;
+
+  for (const shop of shops) {
+    const cleanEmail = (shop.email || '').toLowerCase().trim();
+    let targetUuid = null;
+
+    if (existingShopsByEmail[cleanEmail]) {
+      targetUuid = existingShopsByEmail[cleanEmail];
+    } else if (isUuid(shop.id)) {
+      targetUuid = shop.id;
+    } else {
+      targetUuid = crypto.randomUUID();
+    }
+
+    shopIdMap[shop.id] = targetUuid;
+    shop.id = targetUuid;
+
+    const { error } = await supabase.from('shops').upsert({
+      id: targetUuid,
+      shop_name: shop.shopName || shop.shop_name || 'My Shop',
+      email: cleanEmail,
+      password_hash: shop.passwordHash || shop.password_hash || '',
+      avatar: shop.avatar || '',
+      created_at: shop.createdAt || shop.created_at || new Date().toISOString()
+    });
+    if (!error) {
+      shopsCount++;
+      existingShopsByEmail[cleanEmail] = targetUuid;
+    }
+  }
+
+  const defaultAdminUuid = existingShopsByEmail['admin@bunnieschi.com'] || existingShopsByEmail['mikibun@bunnieschi.com'] || Object.values(shopIdMap)[0];
+  const settingsData = readJson(SETTINGS_FILE, {});
+  let settingsCount = 0;
+
+  if (defaultAdminUuid && (settingsData.domain || settingsData.imapHost)) {
+    const { error } = await supabase.from('shop_settings').upsert({
+      shop_id: defaultAdminUuid,
+      domain: settingsData.domain || 'bunnieschi.com',
+      imap_host: settingsData.imapHost || 'imap.secureserver.net',
+      imap_port: settingsData.imapPort || 993,
+      imap_secure: settingsData.imapSecure !== undefined ? settingsData.imapSecure : true,
+      reject_unauthorized: Boolean(settingsData.rejectUnauthorized),
+      use_catch_all: settingsData.useCatchAll !== undefined ? settingsData.useCatchAll : true,
+      catch_all_email: settingsData.catchAllEmail || 'mikibun@bunnieschi.com',
+      catch_all_password: settingsData.catchAllPassword || 'pamcake2547',
+      updated_at: new Date().toISOString()
+    });
+    if (!error) settingsCount++;
+  }
+
+  for (const [key, val] of Object.entries(settingsData)) {
+    if (typeof val === 'object' && val !== null) {
+      const mappedId = shopIdMap[key] || (isUuid(key) ? key : null);
+      if (mappedId) {
+        const { error } = await supabase.from('shop_settings').upsert({
+          shop_id: mappedId,
+          domain: val.domain || 'bunnieschi.com',
+          imap_host: val.imapHost || 'imap.secureserver.net',
+          imap_port: val.imapPort || 993,
+          imap_secure: val.imapSecure !== undefined ? val.imapSecure : true,
+          reject_unauthorized: Boolean(val.rejectUnauthorized),
+          use_catch_all: val.useCatchAll !== undefined ? val.useCatchAll : true,
+          catch_all_email: val.catchAllEmail || '',
+          catch_all_password: val.catchAllPassword || '',
+          updated_at: new Date().toISOString()
+        });
+        if (!error) settingsCount++;
+      }
+    }
+  }
+
+  const accounts = readJson(ACCOUNTS_FILE, []);
+  let accountsCount = 0;
+  for (const acc of accounts) {
+    let targetShopId = shopIdMap[acc.shopId] || (isUuid(acc.shopId) ? acc.shopId : defaultAdminUuid);
+    acc.shopId = targetShopId;
+
+    const { error } = await supabase.from('accounts').upsert({
+      id: acc.id,
+      shop_id: targetShopId,
+      email: acc.email,
+      email_prefix: acc.emailPrefix || acc.email.split('@')[0],
+      password: acc.password,
+      apps: Array.isArray(acc.apps) ? acc.apps : [acc.app || 'Other'],
+      duration: acc.duration || '30_days',
+      duration_custom: acc.durationCustom || '',
+      note: acc.note || '',
+      status: acc.status || 'active',
+      last_otp: acc.lastOtp || null,
+      created_at: acc.createdAt || new Date().toISOString(),
+      updated_at: acc.updatedAt || new Date().toISOString()
+    });
+    if (!error) accountsCount++;
+  }
+
+  const appsData = readJson(APPS_FILE, {});
+  let appsCount = 0;
+  for (const [sId, list] of Object.entries(appsData)) {
+    const targetShopId = shopIdMap[sId] || (isUuid(sId) ? sId : defaultAdminUuid);
+    if (Array.isArray(list) && targetShopId) {
+      for (const name of list) {
+        const { error } = await supabase.from('app_presets').upsert({
+          shop_id: targetShopId,
+          name: name.trim()
+        }, { onConflict: 'shop_id,name' });
+        if (!error) appsCount++;
+      }
+    }
+  }
+
+  return {
+    success: true,
+    message: `ซิงค์ข้อมูลสำเร็จ: ร้านค้า ${shopsCount}/${shops.length}, บัญชี ${accountsCount}/${accounts.length}, การตั้งค่า ${settingsCount}, แอป ${appsCount}`
+  };
+}
+
 module.exports = {
   getShopByEmail,
   getShopById,
@@ -797,6 +944,7 @@ module.exports = {
   addAppPreset,
   getDbStatus,
   checkSupabaseLive,
+  syncLocalToSupabase,
   isSupabaseConfigured,
   getSupabaseClient
 };

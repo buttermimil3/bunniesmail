@@ -107,3 +107,14 @@ ALTER TABLE public.shops DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.shop_settings DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.accounts DISABLE ROW LEVEL SECURITY;
 ALTER TABLE public.app_presets DISABLE ROW LEVEL SECURITY;
+
+-- 8. ปลดล็อกสิทธิ์ Permissions ให้ service_role, authenticated และ anon เข้าถึงตารางได้ 100%
+GRANT USAGE ON SCHEMA public TO postgres, anon, authenticated, service_role;
+GRANT ALL ON ALL TABLES IN SCHEMA public TO postgres, anon, authenticated, service_role;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO postgres, anon, authenticated, service_role;
+GRANT ALL ON ALL ROUTINES IN SCHEMA public TO postgres, anon, authenticated, service_role;
+
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO postgres, anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO postgres, anon, authenticated, service_role;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON ROUTINES TO postgres, anon, authenticated, service_role;
+
